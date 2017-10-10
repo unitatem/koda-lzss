@@ -3,8 +3,8 @@
 
 #include <vector>
 
-constexpr int DICTIONARY_SIZE = 8;
-constexpr int BUFFER_SIZE = 5;
+constexpr int DICTIONARY_SIZE = 4;
+constexpr int BUFFER_SIZE = 4;
 
 class LZSS {
 public:

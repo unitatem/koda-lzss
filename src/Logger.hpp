@@ -8,10 +8,12 @@
 #define ENABLE_DEBUG
 
 #ifdef ENABLE_DEBUG
-
-    #define DEBUG(x) x
+#define DEBUG(x) \
+	do { \
+		x; \
+	} while (0)
 #else
-    #define DEBUG(X)
+	#define DEBUG(X)
 #endif
 
 void printVector(std::string name, const std::vector<char> vect);
