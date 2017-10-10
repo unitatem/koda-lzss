@@ -1,1 +1,9 @@
-*.out
+# eclipse
+.settings
+.project
+.cproject
+Debug
+
+# ubuntu
+.directory
+
