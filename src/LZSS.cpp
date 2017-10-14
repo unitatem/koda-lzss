@@ -3,7 +3,6 @@
 #include "LZSS.hpp"
 
 #include <tuple>
-#include <utility>
 
 struct ExtendedByte {
 	bool matchInDictionary;

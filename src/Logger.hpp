@@ -1,5 +1,5 @@
 #ifndef LOGGER_HPP
-#define UTILS_HPP
+#define LOGGER_HPP
 
 #include <iostream>
 #include <vector>
@@ -11,7 +11,7 @@
 #define DEBUG(x) \
 	do { \
 		x; \
-	} while (0)
+	} while (false)
 #else
 	#define DEBUG(X)
 #endif
