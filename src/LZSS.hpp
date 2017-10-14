@@ -8,8 +8,9 @@ constexpr int BUFFER_SIZE = 4;
 
 class LZSS {
 public:
-	std::vector<char> encode(const std::vector<char> &input) const;
-	std::vector<char> decode(const std::vector<char> &compressed) const;
+    std::vector<char> encode(const std::vector<char> &input) const;
+
+    std::vector<char> decode(const std::vector<char> &compressed) const;
 };
 
 #endif

@@ -9,11 +9,11 @@
 
 #ifdef ENABLE_DEBUG
 #define DEBUG(x) \
-	do { \
-		x; \
-	} while (false)
+    do { \
+        x; \
+    } while (false)
 #else
-	#define DEBUG(X)
+#define DEBUG(X)
 #endif
 
 void printVector(std::string name, const std::vector<char> vect);
