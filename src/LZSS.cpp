@@ -95,19 +95,38 @@ namespace encode {
 
 namespace decode {
 
-    std::vector<char> decode(const std::vector<char> &input) {
+    std::vector<char> decode(const std::vector<ExtendedByte> &input) {
         //create dictionary as list of first character
-        Dictionary dict{DICTIONARY_SIZE, input.front()};
+        Dictionary dict{DICTIONARY_SIZE, input.front().compositeValue};
         std::vector<char> output;
         auto bitSize = 8;
 
         for (auto i = 1u; i < input.size(); ++i) {
             DEBUG(dict.print());
 
-            DEBUG(std::cout << "1 " << input[i] << "\n");
+            DEBUG(std::cout << "1 " << input[i].compositeValue << "\n");
 
             //dict.shiftOneLeft();
             //dict.insertBack(input[i]);
+        }
+
+        return output;
+    }
+
+    std::vector<ExtendedByte> fromBinary(const std::vector<char> data, int bitCount) {
+        std::vector<ExtendedByte> output;
+
+        DEBUG(std::cout << "From binary started \n");
+        //First value is character which fills dictionary
+        output.push_back({false, data.front()});
+        DEBUG(std::cout << output[0].compositeValue << "\n");
+
+        auto outputIdx = 1;
+        int buffer = 0;
+        auto size = 0;
+        for (auto i = 1; i < data.size(); ++i) {
+            auto a = std::bitset<8>(data[i]);
+            DEBUG(std::cout << a[0] << "\n");
         }
 
         return output;
@@ -126,5 +145,5 @@ std::vector<char> LZSS::encode(const std::vector<char> &input) const {
 
 std::vector<char> LZSS::decode(const std::vector<char> &compressed) const {
     DEBUG(std::cout << "decode()\n");
-    return decode::decode(compressed);
+    return decode::decode(decode::fromBinary(compressed, 8));
 }
