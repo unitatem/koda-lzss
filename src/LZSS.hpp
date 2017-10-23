@@ -5,6 +5,7 @@
 
 #define DICTIONARY_SIZE        4
 #define BUFFER_SIZE            4
+#define LENGTH_OFFESET         1
 
 class LZSS {
 public:

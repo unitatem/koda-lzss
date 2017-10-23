@@ -11,13 +11,12 @@ int main() {
                                 'a', 'b', 'd'};
     printVector("Source", source);
     auto comp = codec.encode(source);
-    printVectorAsBits("Encoded", comp);
     //jezeli odnalazl to od zera zaczyna
     /*
     01100001 -> a
-    0 00 10    -> 0 0 2
-    0 01100010 -> 0 b
-    0 00100    -> 0 1 0
+    00010    -> 0 0 2
+    00110    -> 0 1 2
+    00100    -> 0 1 0
     110100110 -> 1 ¦ ???
      001100100000100001100100
      */
@@ -26,6 +25,7 @@ int main() {
     //
     auto dec = codec.decode(comp);
     printVector("Decoded", dec);
+
 
     DEBUG(std::cout << "End\n");
     return 0;

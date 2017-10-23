@@ -11,6 +11,6 @@ void printVector(std::string name, const std::vector<char> vect) {
 void printVectorAsBits(std::string name, const std::vector<char> vect){
     std::cout << name << " = ";
     for (const auto i : vect)
-        std::cout<<std::bitset<8>(i)<<std::endl;
+        std::cout << std::bitset<8>(i) << "\n";
     std::cout << "\n";
 }
