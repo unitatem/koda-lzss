@@ -17,5 +17,6 @@
 #endif
 
 void printVector(std::string name, const std::vector<char> vect);
+void printVectorAsBits(std::string name, const std::vector<char> vect);
 
 #endif

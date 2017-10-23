@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <tuple>
+#include <bitset>
 
 struct ExtendedByte {
     bool useDictionary;
@@ -34,7 +35,7 @@ namespace encode {
             if (length) {
                 DEBUG(std::cout << "0 " << start << " " << length << "\n");
 
-                output.push_back({true, static_cast<char>((start << idxToDictionaryPositionSizeInBinary) | length)});
+                output.push_back({true, static_cast<char>((start << idxToDictionaryPositionSizeInBinary) | length - LENGTH_OFFESET)});
                 bitSize += 1 + 2 * idxToDictionaryPositionSizeInBinary;
                 for (auto j = 0; j < length; ++j) {
                     dict.shiftOneLeft();
@@ -61,7 +62,9 @@ namespace encode {
         int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
         std::vector<char> output(outputSizeInBytes);
 
+        DEBUG(std::cout << "Binary encoded bits string\n");
         output[0] = data[0].compositeValue;
+        DEBUG(std::cout << std::bitset<8>(output[0]) << "\n");
 
         auto outputIdx = 1;
         int buffer = 0;
@@ -70,10 +73,12 @@ namespace encode {
             if (data[i].useDictionary) {
                 buffer <<= 1 + 2 * idxToDictionaryPositionSizeInBinary;
                 buffer |= data[i].compositeValue;
+                DEBUG(std::cout << std::bitset<5>(data[i].compositeValue) << "\n");
                 size += 1 + 2 * idxToDictionaryPositionSizeInBinary;
             } else {
                 buffer <<= 1 + 8;
-                buffer |= data[i].compositeValue;
+                buffer |= (1 << 8) | data[i].compositeValue;
+                DEBUG(std::cout << std::bitset<9>((1 << 8) | data[i].compositeValue) << "\n");
                 size += 1 + 8;
             }
             while (size >= 8) {
