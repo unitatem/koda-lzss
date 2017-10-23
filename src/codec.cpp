@@ -11,6 +11,7 @@ int main() {
                                 'a', 'b', 'd'};
     printVector("Source", source);
     auto comp = codec.encode(source);
+    printVectorAsBits("Bits", comp);
     //jezeli odnalazl to od zera zaczyna
     /*
     01100001 -> a
