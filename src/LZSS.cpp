@@ -16,6 +16,13 @@ struct ExtendedByte {
 #endif
 };
 
+struct DecodeStruct {
+    bool useDictionary;
+    char value;
+    int val1;
+    int val2;
+};
+
 namespace encode {
     constexpr int idxToDictionaryPositionSizeInBinary = std::log2(DICTIONARY_SIZE);
 
@@ -96,16 +103,16 @@ namespace encode {
 
 namespace decode {
 
-    std::vector<char> decode(const std::vector<ExtendedByte> &input) {
+    std::vector<char> decode(const std::vector<DecodeStruct> &input) {
         //create dictionary as list of first character
-        Dictionary dict{DICTIONARY_SIZE, input.front().compositeValue};
+        Dictionary dict{DICTIONARY_SIZE, input.front().value};
         std::vector<char> output;
         auto bitSize = 8;
 
-        for (auto i = 1u; i < input.size(); ++i) {
+        for (auto i = 0u; i < input.size(); ++i) {
             DEBUG(dict.print());
 
-            DEBUG(std::cout << "1 " << input[i].compositeValue << "\n");
+            DEBUG(std::cout << input[i].useDictionary << " " << input[i].value << " " << input[i].val1 << " " << input[i].val2 <<"\n");
 
             //dict.shiftOneLeft();
             //dict.insertBack(input[i]);
@@ -114,20 +121,62 @@ namespace decode {
         return output;
     }
 
-    std::vector<ExtendedByte> fromBinary(const std::vector<char> data, int bitCount) {
-        std::vector<ExtendedByte> output;
+    std::vector<DecodeStruct> fromBinary(const std::vector<char> data, int bitCount) {
+        std::vector<DecodeStruct> output;
 
         DEBUG(std::cout << "From binary started \n");
         //First value is character which fills dictionary
-        output.push_back({false, data.front()});
-        DEBUG(std::cout << output[0].compositeValue << "\n");
+        output.push_back({false, data.front(), 0, 0});
+        DEBUG(std::cout << output[0].value << "\n");
 
-        auto outputIdx = 1;
-        int buffer = 0;
-        auto size = 0;
-        for (auto i = 1; i < data.size(); ++i) {
-            auto a = std::bitset<8>(data[i]);
-            DEBUG(std::cout << a[0] << "\n");
+        auto globalBitSet = std::bitset<9>(0);
+        int numberOfMeaningBits = 0;
+        auto currentBitSet = std::bitset<8>(0);
+        int numberOfCurrentBits = 0;
+
+        for (auto i = 1; i <= data.size(); ++i) {
+            if (i < data.size()){
+                currentBitSet = std::bitset<8>(data[i]);
+                numberOfCurrentBits = 8;
+            }
+
+            for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j --) {
+                globalBitSet[j-1] = currentBitSet[numberOfCurrentBits-1];
+                numberOfCurrentBits--;
+                numberOfMeaningBits++;
+            }
+
+            //bits  data[currentId];
+            DEBUG(std::cout << globalBitSet << std::endl);
+            if (globalBitSet[8] == 0) {
+                auto var1 = std::bitset<2>(0);
+                auto var2 = std::bitset<2>(0);
+                var1[1] = globalBitSet[7];
+                var1[0] = globalBitSet[6];
+                var2[1] = globalBitSet[5];
+                var2[0] = globalBitSet[4];
+                DEBUG(std::cout << (int)var1.to_ulong() << std::endl);
+                DEBUG(std::cout << (int)var2.to_ulong()+1 << std::endl);
+                output.push_back({true, ' ', (int)var1.to_ulong(), (int)var2.to_ulong()+1});
+                globalBitSet = globalBitSet << 5;
+                numberOfMeaningBits -= 5;
+                DEBUG(std::cout << globalBitSet << std::endl);
+            } else if (numberOfMeaningBits == 9){
+                auto value = std::bitset<8>(0);
+                for (int z= 0; z<8; z++) {
+                    value[z] = globalBitSet[z];
+                }
+                auto val = value.to_ulong();
+                output.push_back({false, static_cast<unsigned char>(val), 0, 0});
+                numberOfMeaningBits -= 9;
+            }
+            if (numberOfCurrentBits > 0) {
+                for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j --) {
+                    globalBitSet[j-1] = currentBitSet[numberOfCurrentBits-1];
+                    numberOfCurrentBits--;
+                    numberOfMeaningBits++;
+                }
+            };
         }
 
         return output;
