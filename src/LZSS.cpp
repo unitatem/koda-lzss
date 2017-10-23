@@ -86,7 +86,8 @@ namespace encode {
                 output[outputIdx++] = static_cast<char>(buffer >> size);
             }
         }
-        output[outputIdx] = static_cast<char>(buffer);
+        if (size)
+            output[outputIdx] = static_cast<char>(buffer << (8 - size));
         assert(outputIdx + 1 == outputSizeInBytes);
 
         return output;
