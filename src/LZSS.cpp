@@ -88,6 +88,27 @@ namespace encode {
     }
 }
 
+namespace decode {
+
+    std::vector<char> decode(const std::vector<char> &input) {
+        //create dictionary as list of first character
+        Dictionary dict{DICTIONARY_SIZE, input.front()};
+        std::vector<char> output;
+        auto bitSize = 8;
+
+        for (auto i = 1u; i < input.size(); ++i) {
+            DEBUG(dict.print());
+
+            DEBUG(std::cout << "1 " << input[i] << "\n");
+
+            //dict.shiftOneLeft();
+            //dict.insertBack(input[i]);
+        }
+
+        return output;
+    }
+}
+
 std::vector<char> LZSS::encode(const std::vector<char> &input) const {
     DEBUG(std::cout << "encode()\n");
     if (input.empty()) return {};
@@ -100,5 +121,5 @@ std::vector<char> LZSS::encode(const std::vector<char> &input) const {
 
 std::vector<char> LZSS::decode(const std::vector<char> &compressed) const {
     DEBUG(std::cout << "decode()\n");
-    return {};
+    return decode::decode(compressed);
 }
