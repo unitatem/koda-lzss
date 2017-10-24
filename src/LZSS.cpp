@@ -19,8 +19,8 @@ struct ExtendedByte {
 struct DecodeStruct {
     bool useDictionary;
     char value;
-    int val1;
-    int val2;
+    int startPositionIdx;
+    int matchLength;
 };
 
 namespace encode {
@@ -42,7 +42,8 @@ namespace encode {
             if (length) {
                 DEBUG(std::cout << "0 " << start << " " << length << "\n");
 
-                output.push_back({true, static_cast<char>((start << idxToDictionaryPositionSizeInBinary) | length - LENGTH_OFFESET)});
+                output.push_back({true, static_cast<char>((start << idxToDictionaryPositionSizeInBinary) |
+                                                          length - LENGTH_OFFESET)});
                 bitSize += 1 + 2 * idxToDictionaryPositionSizeInBinary;
                 for (auto j = 0; j < length; ++j) {
                     dict.shiftOneLeft();
@@ -110,11 +111,12 @@ namespace decode {
 
         for (auto i = 1u; i < input.size(); ++i) {
             DEBUG(dict.print());
-            DEBUG(std::cout << input[i].useDictionary << " " << input[i].value << " " << input[i].val1 << " " << input[i].val2 <<"\n");
+            DEBUG(std::cout << input[i].useDictionary << " " << input[i].value << " " << input[i].startPositionIdx
+                            << " " << input[i].matchLength << "\n");
 
-            if(input[i].useDictionary) {
-                for (int j = input[i].val1; j < input[i].val1 + input[i].val2; j++){
-                    auto outputValue = dict.getCharAtGivenIdx(input[i].val1);
+            if (input[i].useDictionary) {
+                for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; j++) {
+                    auto outputValue = dict.getCharAtGivenIdx(input[i].startPositionIdx);
                     output.push_back(outputValue);
                     dict.shiftOneLeft();
                     dict.insertBack(outputValue);
@@ -129,7 +131,7 @@ namespace decode {
         return output;
     }
 
-    std::vector<DecodeStruct> fromBinary(const std::vector<char> data, int bitCount) {
+    std::vector<DecodeStruct> fromBinary(const std::vector<char> data) {
         std::vector<DecodeStruct> output;
 
         DEBUG(std::cout << "From binary started \n");
@@ -143,13 +145,13 @@ namespace decode {
         int numberOfCurrentBits = 0;
 
         for (auto i = 1; i <= data.size(); ++i) {
-            if (i < data.size()){
+            if (i < data.size()) {
                 currentBitSet = std::bitset<8>(data[i]);
                 numberOfCurrentBits = 8;
             }
 
-            for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j --) {
-                globalBitSet[j-1] = currentBitSet[numberOfCurrentBits-1];
+            for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
+                globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
                 numberOfCurrentBits--;
                 numberOfMeaningBits++;
             }
@@ -163,15 +165,15 @@ namespace decode {
                 var1[0] = globalBitSet[6];
                 var2[1] = globalBitSet[5];
                 var2[0] = globalBitSet[4];
-                DEBUG(std::cout << (int)var1.to_ulong() << std::endl);
-                DEBUG(std::cout << (int)var2.to_ulong()+1 << std::endl);
-                output.push_back({true, ' ', (int)var1.to_ulong(), (int)var2.to_ulong()+1});
-                globalBitSet = globalBitSet << 5;
-                numberOfMeaningBits -= 5;
+                DEBUG(std::cout << (int) var1.to_ulong() << std::endl);
+                DEBUG(std::cout << (int) var2.to_ulong() + 1 << std::endl);
+                output.push_back({true, ' ', (int) var1.to_ulong(), (int) var2.to_ulong() + LENGTH_OFFESET});
+                globalBitSet = globalBitSet << 1+DICTIONARY_SIZE;
+                numberOfMeaningBits -= (1+DICTIONARY_SIZE);
                 DEBUG(std::cout << globalBitSet << std::endl);
-            } else if (numberOfMeaningBits == 9){
+            } else if (numberOfMeaningBits == 9) {
                 auto value = std::bitset<8>(0);
-                for (int z= 0; z<8; z++) {
+                for (int z = 0; z < 8; z++) {
                     value[z] = globalBitSet[z];
                 }
                 auto val = value.to_ulong();
@@ -179,8 +181,8 @@ namespace decode {
                 numberOfMeaningBits -= 9;
             }
             if (numberOfCurrentBits > 0) {
-                for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j --) {
-                    globalBitSet[j-1] = currentBitSet[numberOfCurrentBits-1];
+                for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
+                    globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
                     numberOfCurrentBits--;
                     numberOfMeaningBits++;
                 }
@@ -203,5 +205,5 @@ std::vector<char> LZSS::encode(const std::vector<char> &input) const {
 
 std::vector<char> LZSS::decode(const std::vector<char> &compressed) const {
     DEBUG(std::cout << "decode()\n");
-    return decode::decode(decode::fromBinary(compressed, 8));
+    return decode::decode(decode::fromBinary(compressed));
 }
