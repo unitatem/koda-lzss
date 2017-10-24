@@ -107,15 +107,23 @@ namespace decode {
         //create dictionary as list of first character
         Dictionary dict{DICTIONARY_SIZE, input.front().value};
         std::vector<char> output;
-        auto bitSize = 8;
 
-        for (auto i = 0u; i < input.size(); ++i) {
+        for (auto i = 1u; i < input.size(); ++i) {
             DEBUG(dict.print());
-
             DEBUG(std::cout << input[i].useDictionary << " " << input[i].value << " " << input[i].val1 << " " << input[i].val2 <<"\n");
 
-            //dict.shiftOneLeft();
-            //dict.insertBack(input[i]);
+            if(input[i].useDictionary) {
+                for (int j = input[i].val1; j < input[i].val1 + input[i].val2; j++){
+                    auto outputValue = dict.getCharAtGivenIdx(input[i].val1);
+                    output.push_back(outputValue);
+                    dict.shiftOneLeft();
+                    dict.insertBack(outputValue);
+                }
+            } else {
+                output.push_back(input[i].value);
+                dict.shiftOneLeft();
+                dict.insertBack(input[i].value);
+            }
         }
 
         return output;

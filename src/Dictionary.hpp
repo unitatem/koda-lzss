@@ -15,6 +15,8 @@ public:
 
     void print();
 
+    char getCharAtGivenIdx(int i);
+
 private:
     std::vector<char> dictionary;
 };
