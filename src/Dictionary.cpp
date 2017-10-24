@@ -13,6 +13,10 @@ void Dictionary::shiftOneLeft() {
         dictionary[i] = dictionary[i + 1];
 }
 
+char Dictionary::getCharAtGivenIdx(int i){
+    return dictionary[i];
+}
+
 // TODO: profile, if too slow refactor with use of moving hash
 std::pair<int, int> Dictionary::findMatch(const std::vector<char> &data,
                                           int begin, int end) {
