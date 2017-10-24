@@ -3,6 +3,8 @@ project(koda_lzss)
 
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(OpenCV REQUIRED)
+
 set(SOURCE_FILES
         src/codec.cpp
         src/Dictionary.cpp
@@ -12,4 +14,6 @@ set(SOURCE_FILES
         src/LZSS.cpp
         src/LZSS.hpp)
 
-add_executable(koda_lzss ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+include_directories(${OpenCV_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
