@@ -2,8 +2,9 @@
 #include "LZSS.hpp"
 
 int main() {
-    DEBUG(std::cout << "Start\n");
-
+	loggerPrint("*******************Start*******************");
+	loggerPrint("Dictionary size: " + std::to_string(DICTIONARY_SIZE));
+	loggerPrint("Buffer size: " + std::to_string(BUFFER_SIZE));
     LZSS codec;
 
     // wikipedia test case, https://pl.wikipedia.org/wiki/LZSS
@@ -11,11 +12,12 @@ int main() {
                                 'a', 'b', 'd'};
     printVector("Source", source);
     auto comp = codec.encode(source);
-    printVectorAsBits("Bits", comp);
+    printVectorAsBits("Transmission in Bytes: ", comp);
     auto dec = codec.decode(comp);
     printVector("Decoded", dec);
 
 
-    DEBUG(std::cout << "End\n");
+	loggerPrint("*******************End*******************");
+	system("pause");
     return 0;
 }
