@@ -1,6 +1,6 @@
 #include <bitset>
 #include "Logger.hpp"
-#include <time.h>
+#include <ctime>
 #include <ios>
 #include <fstream>
 
@@ -43,24 +43,22 @@ void printVectorAsBits(std::string name, const std::vector<char> vect){
 	loggerPrint(text);
 }
 
-const std::string currentDateTime() {
-	char str[70];
-	time_t rawtime;
-	struct tm timeinfo;
-	time(&rawtime);
-	localtime_s(&timeinfo, &rawtime);
-	strftime(str, 100, "%Y-%m-%d %X", &timeinfo);
+namespace {
+    const std::string getTimeStamp(const char *format) {
+        time_t rawTime;
+        time (&rawTime);
+        auto timeInfo = std::localtime(&rawTime);
+        char buffer[80];
+        strftime(buffer,sizeof(buffer), format,timeInfo);
+        std::string str(buffer);
+        return str;
+    }
+}
 
-	return str;
+const std::string currentDateTime() {
+	return getTimeStamp("%Y-%m-%d %X");
 }
 
 const std::string currentDate() {
-	char str[70];
-	time_t rawtime;
-	struct tm timeinfo;
-	time(&rawtime);
-	localtime_s(&timeinfo, &rawtime);
-	strftime(str, 100, "%Y-%m-%d", &timeinfo);
-
-	return str;
+    return getTimeStamp("%Y-%m-%d");
 }
