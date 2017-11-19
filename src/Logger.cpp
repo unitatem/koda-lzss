@@ -47,6 +47,7 @@ namespace {
     const std::string getTimeStamp(const char *format) {
         time_t rawTime;
         time (&rawTime);
+#pragma warning(suppress : 4996)
         auto timeInfo = std::localtime(&rawTime);
         char buffer[80];
         strftime(buffer,sizeof(buffer), format,timeInfo);
