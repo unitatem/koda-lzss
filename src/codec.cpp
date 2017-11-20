@@ -9,25 +9,32 @@
 #include <vector>
 #include <iterator>
 
+#define IMAGES
+//#define WIKI_CASE
+
 int main() {
 	loggerPrint("*******************Start*******************");
 	loggerPrint("Dictionary size: " + std::to_string(DICTIONARY_SIZE));
 	loggerPrint("Buffer size: " + std::to_string(BUFFER_SIZE));
     LZSS codec;
 
-	//Treating images as any files
-	auto loadedImage = readFile("E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\koda-lzss\\image.jpg");
-	//createFile(loadedImage, "E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\koda-lzss\\newImage.jpg");
+#ifdef IMAGES
+	std::string imagesFolder = "E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\Dane\\obrazy\\";
+	std::string image = "barbara";
 
-	auto loadedPgmImage = readPgmImage("E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\Dane\\obrazy\\barbara.pgm");
-	//createFile(loadedPgmImage, "E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\koda-lzss\\barbara.txt");
+
+	auto loadedPgmImage = readPgmImage(imagesFolder + image + ".pgm");
+
 	auto rows = loadedPgmImage.rows;
 	auto cols = loadedPgmImage.cols;
-	//auto maxValue = 
 	auto matType = loadedPgmImage.type();
-	auto imagetoEncode = getImagePixels(loadedPgmImage);
-	createPgmImage(imagetoEncode, rows, cols, matType, "E:\\EITI\\EITI-II.SID\\KODA\\Projekt\\koda-lzss\\barbara.pgm");
-	//printVector("Source", imagetoEncode);
+	auto imagetoEncode = getImagePixels(loadedPgmImage); //imageData
+	auto imageEncoded = codec.encode(imagetoEncode);
+	createFile(imageEncoded, imagesFolder + image + "Encoded.txt");
+	auto imageDecoded = codec.decode(imageEncoded);
+	createPgmImage(imageDecoded, rows, cols, matType, imagesFolder + image + "Decoded.pgm");
+#endif
+#ifdef WIKI_CASE
     // wikipedia test case, https://pl.wikipedia.org/wiki/LZSS
     std::vector<char> source = {'a', 'a', 'b', 'b', 'c', 'a', 'b', 'b', 'c',
                                 'a', 'b', 'd'};
@@ -40,5 +47,6 @@ int main() {
 
 	loggerPrint("*******************End*******************");
 	system("pause");
+#endif
     return 0;
 }
