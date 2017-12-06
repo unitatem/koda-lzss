@@ -1,11 +1,11 @@
 #ifndef LZSS_HPP
 #define LZSS_HPP
 
+#include <tuple>
 #include <vector>
 
 #define DICTIONARY_SIZE        4
-#define BUFFER_SIZE            4
-#define LENGTH_OFFSET         1
+#define WINDOW_SIZE            4
 
 class LZSS {
 public:
