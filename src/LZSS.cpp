@@ -73,16 +73,16 @@ namespace encode {
     }
 
     std::vector<unsigned char> toBinary(const std::vector<ExtendedByte> data, int bitCount) {
-        int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
+        unsigned int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
         std::vector<unsigned char> output(outputSizeInBytes);
 
         loggerPrint("Binary encoded bits string");
         output[0] = data[0].compositeValue;
         loggerPrint((std::bitset<8>(output[0]).to_string()));
 
-        auto outputIdx = 1;
-        int buffer = 0;
-        auto size = 0;
+        auto outputIdx = 1u;
+        auto buffer = 0u;
+        auto size = 0u;
         for (auto i = 1u; i < data.size(); ++i) {
             if (data[i].useDictionary) {
                 buffer <<= 1 + 2 * idxToDictionaryPositionSizeInBinary;
@@ -109,38 +109,6 @@ namespace encode {
 }
 
 namespace decode {
-
-    std::vector<unsigned char> decode(const std::vector<DecodeStruct> &input) {
-		loggerPrint("Started Decoding");
-        //create dictionary as list of first character
-        Dictionary dict{DICTIONARY_SIZE, input.front().value};
-        std::vector<unsigned char> output;
-
-        for (auto i = 1u; i < input.size(); ++i) {
-            DEBUG(dict.print());
-			std::string Value;
-			Value += input[i].value;
-			std::string position;
-			position = input[i].useDictionary ? (" " + std::to_string(input[i].startPositionIdx) + " " + std::to_string(input[i].matchLength)) : "";
-            loggerPrint(std::to_string(input[i].useDictionary ? 0 : 1) += (input[i].useDictionary ? "" :" " + Value) += position);
-
-            if (input[i].useDictionary) {
-                for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; j++) {
-                    auto outputValue = dict.getCharAtGivenIdx(input[i].startPositionIdx);
-                    output.push_back(outputValue);
-                    dict.shiftOneLeft();
-                    dict.insertBack(outputValue);
-                }
-            } else {
-                output.push_back(input[i].value);
-                dict.shiftOneLeft();
-                dict.insertBack(input[i].value);
-            }
-        }
-
-        return output;
-    }
-
     std::vector<DecodeStruct> fromBinary(const std::vector<unsigned char> data, int sizeTotal) {
         std::vector<DecodeStruct> output;
 
@@ -159,6 +127,7 @@ namespace decode {
 
         for (auto i = 1u; i <= data.size() && outputSize < sizeTotal; ++i) {
             if (i < data.size()) {
+                assert(numberOfCurrentBits == 0);
                 currentBitSet = std::bitset<8>(data[i]);
                 numberOfCurrentBits = 8;
             }
@@ -169,41 +138,81 @@ namespace decode {
                 numberOfMeaningBits++;
             }
 
-            //bits  data[currentId];
-            loggerPrint("GlobalBitSet  " + globalBitSet.to_string());
-			loggerPrint("CurrentBitSet  " + currentBitSet.to_string());
-            if (globalBitSet[8] == 0) {
-                auto var1 = std::bitset<2>(0);
-                auto var2 = std::bitset<2>(0);
-                var1[1] = globalBitSet[7];
-                var1[0] = globalBitSet[6];
-                var2[1] = globalBitSet[5];
-                var2[0] = globalBitSet[4];
-                loggerPrint(std::to_string(var1.to_ulong()) + " " + std::to_string(var2.to_ulong() + 1));
-                output.push_back({true, ' ', (int) var1.to_ulong(), (int) var2.to_ulong() + LENGTH_OFFSET});
-                outputSize += 1 + std::log2(DICTIONARY_SIZE) * 2;
-                globalBitSet <<= 1 + std::log2(DICTIONARY_SIZE) * 2;
-                numberOfMeaningBits -= (1 + std::log2(DICTIONARY_SIZE) * 2);
-                loggerPrint("New GlobalBitSet  " + globalBitSet.to_string());
-            } else if (numberOfMeaningBits == 9) {
-                auto value = std::bitset<8>(0);
-                for (int z = 0; z < 8; ++z) {
-                    value[z] = globalBitSet[z];
+            bool repeatLoop;
+            do {
+                repeatLoop = false;
+
+                //bits  data[currentId];
+                loggerPrint("GlobalBitSet  " + globalBitSet.to_string());
+                loggerPrint("CurrentBitSet  " + currentBitSet.to_string());
+                if (globalBitSet[8] == 0) {
+                    auto var1 = std::bitset<2>(0);
+                    auto var2 = std::bitset<2>(0);
+                    var1[1] = globalBitSet[7];
+                    var1[0] = globalBitSet[6];
+                    var2[1] = globalBitSet[5];
+                    var2[0] = globalBitSet[4];
+                    //                loggerPrint(std::to_string(var1.to_ulong()) + " " + std::to_string(var2.to_ulong() + 1));
+                    output.push_back({true, ' ', (int) var1.to_ulong(), (int) var2.to_ulong() + LENGTH_OFFSET});
+                    outputSize += 1 + std::log2(DICTIONARY_SIZE) * 2;
+                    globalBitSet <<= 1 + std::log2(DICTIONARY_SIZE) * 2;
+                    numberOfMeaningBits -= (1 + std::log2(DICTIONARY_SIZE) * 2);
+                    //                loggerPrint("New GlobalBitSet  " + globalBitSet.to_string());
+                } else if (numberOfMeaningBits == 9) {
+                    auto value = std::bitset<8>(0);
+                    for (int z = 0; z < 8; ++z) {
+                        value[z] = globalBitSet[z];
+                    }
+                    auto val = value.to_ulong();
+                    output.push_back({false, static_cast<unsigned char>(val), 0, 0});
+                    outputSize += 9;
+                    //				std::string nextSepararateValue;
+                    //				nextSepararateValue += static_cast<unsigned char>(val);
+                    //				loggerPrint(nextSepararateValue);
+                    numberOfMeaningBits -= 9;
                 }
-                auto val = value.to_ulong();
-                output.push_back({false, static_cast<unsigned char>(val), 0, 0});
-                outputSize += 9;
-				std::string nextSepararateValue;
-				nextSepararateValue += static_cast<unsigned char>(val);
-				loggerPrint(nextSepararateValue);
-                numberOfMeaningBits -= 9;
-            }
-            if (numberOfCurrentBits > 0) {
-                for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
-                    globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
-                    numberOfCurrentBits--;
-                    numberOfMeaningBits++;
+                if (numberOfCurrentBits > 0) {
+                    for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
+                        globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
+                        numberOfCurrentBits--;
+                        numberOfMeaningBits++;
+                        if (numberOfMeaningBits == 9) {
+                            repeatLoop = true;
+                            break;
+                        }
+                    }
                 }
+            } while(repeatLoop);
+        }
+
+        return output;
+    }
+
+    std::vector<unsigned char> decode(const std::vector<DecodeStruct> &input) {
+        loggerPrint("Started Decoding");
+        //create dictionary as list of first character
+        Dictionary dict{DICTIONARY_SIZE, input.front().value};
+        std::vector<unsigned char> output;
+
+        for (auto i = 1u; i < input.size(); ++i) {
+            DEBUG(dict.print());
+            std::string Value;
+            Value += input[i].value;
+            std::string position;
+            position = input[i].useDictionary ? (" " + std::to_string(input[i].startPositionIdx) + " " + std::to_string(input[i].matchLength)) : "";
+            loggerPrint(std::to_string(input[i].useDictionary ? 0 : 1) += (input[i].useDictionary ? "" :" " + Value) += position);
+
+            if (input[i].useDictionary) {
+                for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; j++) {
+                    auto outputValue = dict.getCharAtGivenIdx(input[i].startPositionIdx);
+                    output.push_back(outputValue);
+                    dict.shiftOneLeft();
+                    dict.insertBack(outputValue);
+                }
+            } else {
+                output.push_back(input[i].value);
+                dict.shiftOneLeft();
+                dict.insertBack(input[i].value);
             }
         }
 

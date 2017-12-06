@@ -2,13 +2,6 @@
 #include "LZSS.hpp"
 #include "MediaOperations.hpp"
 
-
-#include <iostream>
-//#include <conio.h>
-#include <fstream>
-#include <vector>
-//#include <iterator>
-
 #define IMAGES
 //#define WIKI_CASE
 
@@ -20,7 +13,7 @@ int main() {
 
 #ifdef IMAGES
     std::string imagesFolder = "/home/mariusz/workingDirectory/koda-lzss/obrazy/";
-    std::string image = "barbara";
+    std::string image = "lena";
 
     auto loadedPgmImage = readPgmImage(imagesFolder + image + ".pgm");
 
@@ -40,12 +33,11 @@ int main() {
 #endif
 #ifdef WIKI_CASE
     // wikipedia test case, https://pl.wikipedia.org/wiki/LZSS
-//    std::vector<unsigned char> source = {'a', 'a', 'b', 'b', 'c', 'a', 'b', 'b', 'c',
-//                                'a', 'b', 'd'};
+    std::vector<unsigned char> source = {'a', 'a', 'b', 'b', 'c', 'a', 'b', 'b', 'c', 'a', 'b', 'd'};
 
 //    std::vector<unsigned char> source = {47, 120};
 
-    std::vector<unsigned char> source = {125, 113, 100, 93, 97, 115, 142, 163, 170, 170, 169, 161, 160, 161, 160, 160, 155, 160, 161};
+//    std::vector<unsigned char> source = {115, 142, 163, 170, 170, 169, 161, 160, 161, 160, 160, 155, 160, 161};
 
     printVector("Source", source);
     std::vector<unsigned char> comp;
