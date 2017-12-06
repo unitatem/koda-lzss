@@ -9,9 +9,9 @@
 
 class LZSS {
 public:
-    std::vector<char> encode(const std::vector<char> &input) const;
+    std::tuple<std::vector<unsigned char>, int> encode(const std::vector<unsigned char> &input) const;
 
-    std::vector<char> decode(const std::vector<char> &compressed) const;
+    std::vector<unsigned char> decode(const std::vector<unsigned char> &compressed, int size) const;
 };
 
 #endif

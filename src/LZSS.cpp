@@ -10,7 +10,7 @@
 struct ExtendedByte {
     bool useDictionary;
 #if DICTIONARY_SIZE <= 16
-    char compositeValue;
+    unsigned char compositeValue;
 #else
 #error "Unsupported buffer size"
 #endif
@@ -18,7 +18,7 @@ struct ExtendedByte {
 
 struct DecodeStruct {
     bool useDictionary;
-    char value;
+    unsigned char value;
     int startPositionIdx;
     int matchLength;
 };
@@ -26,17 +26,17 @@ struct DecodeStruct {
 namespace encode {
     int idxToDictionaryPositionSizeInBinary = std::log2(DICTIONARY_SIZE);
 	
-    std::pair<std::vector<ExtendedByte>, int> prepareData(const std::vector<char> &input) {
+    std::pair<std::vector<ExtendedByte>, int> prepareData(const std::vector<unsigned char> &input) {
         Dictionary dict{DICTIONARY_SIZE, input.front()};
         std::vector<ExtendedByte> output;
         output.push_back({false, input.front()});
-        auto bitSize = 8;
+        auto bitSize = 8u;
 
         for (auto i = 0u; i < input.size(); ++i) {
             DEBUG(dict.print());
 			std::string buffer;
-			int restOfTheInput = input.size() - i;
-			for (int bufferIter = i; bufferIter < i + (restOfTheInput > BUFFER_SIZE ? BUFFER_SIZE : restOfTheInput); bufferIter++)
+            auto restOfTheInput = input.size() - i;
+			for (int bufferIter = i; bufferIter < i + (restOfTheInput > BUFFER_SIZE ? BUFFER_SIZE : restOfTheInput); ++bufferIter)
 				buffer += input[bufferIter];
 			loggerPrint("BUFFER : " + buffer);
             auto start = 0;
@@ -47,7 +47,7 @@ namespace encode {
             if (length) {
                 loggerPrint("0 " + std::to_string(start) + " " + std::to_string(length));
 
-                output.push_back({true, static_cast<char>((start << idxToDictionaryPositionSizeInBinary) |
+                output.push_back({true, static_cast<unsigned char>((start << idxToDictionaryPositionSizeInBinary) |
                                                           length - LENGTH_OFFSET)});
                 bitSize += 1 + 2 * idxToDictionaryPositionSizeInBinary;
                 for (auto j = 0; j < length; ++j) {
@@ -72,9 +72,9 @@ namespace encode {
         return {output, bitSize};
     }
 
-    std::vector<char> toBinary(const std::vector<ExtendedByte> data, int bitCount) {
+    std::vector<unsigned char> toBinary(const std::vector<ExtendedByte> data, int bitCount) {
         int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
-        std::vector<char> output(outputSizeInBytes);
+        std::vector<unsigned char> output(outputSizeInBytes);
 
         loggerPrint("Binary encoded bits string");
         output[0] = data[0].compositeValue;
@@ -83,7 +83,7 @@ namespace encode {
         auto outputIdx = 1;
         int buffer = 0;
         auto size = 0;
-        for (auto i = 1; i < data.size(); ++i) {
+        for (auto i = 1u; i < data.size(); ++i) {
             if (data[i].useDictionary) {
                 buffer <<= 1 + 2 * idxToDictionaryPositionSizeInBinary;
                 buffer |= data[i].compositeValue;
@@ -97,12 +97,12 @@ namespace encode {
             }
             while (size >= 8) {
                 size -= 8;
-                output[outputIdx++] = static_cast<char>(buffer >> size);
+                output[outputIdx++] = static_cast<unsigned char>(buffer >> size);
             }
         }
         if (size)
-            output[outputIdx] = static_cast<char>(buffer << (8 - size));
-        assert(outputIdx + 1 == outputSizeInBytes);
+            output[outputIdx] = static_cast<unsigned char>(buffer << (8 - size));
+        assert(outputIdx + (bitCount % 8 ? 1 : 0) == outputSizeInBytes);
 
         return output;
     }
@@ -110,11 +110,11 @@ namespace encode {
 
 namespace decode {
 
-    std::vector<char> decode(const std::vector<DecodeStruct> &input) {
+    std::vector<unsigned char> decode(const std::vector<DecodeStruct> &input) {
 		loggerPrint("Started Decoding");
         //create dictionary as list of first character
         Dictionary dict{DICTIONARY_SIZE, input.front().value};
-        std::vector<char> output;
+        std::vector<unsigned char> output;
 
         for (auto i = 1u; i < input.size(); ++i) {
             DEBUG(dict.print());
@@ -122,7 +122,7 @@ namespace decode {
 			Value += input[i].value;
 			std::string position;
 			position = input[i].useDictionary ? (" " + std::to_string(input[i].startPositionIdx) + " " + std::to_string(input[i].matchLength)) : "";
-            loggerPrint(std::to_string(input[i].useDictionary ? 0 : 1) + (input[i].useDictionary ? "" :" " + Value) + position);
+            loggerPrint(std::to_string(input[i].useDictionary ? 0 : 1) += (input[i].useDictionary ? "" :" " + Value) += position);
 
             if (input[i].useDictionary) {
                 for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; j++) {
@@ -141,12 +141,13 @@ namespace decode {
         return output;
     }
 
-    std::vector<DecodeStruct> fromBinary(const std::vector<char> data) {
+    std::vector<DecodeStruct> fromBinary(const std::vector<unsigned char> data, int sizeTotal) {
         std::vector<DecodeStruct> output;
 
         loggerPrint("From binary started");
         //First value is character which fills dictionary
         output.push_back({false, data.front(), 0, 0});
+        int outputSize = 8;
 		std::string firstValue;
 		firstValue += output[0].value;
         loggerPrint(firstValue);
@@ -156,13 +157,13 @@ namespace decode {
         auto currentBitSet = std::bitset<8>(0);
         int numberOfCurrentBits = 0;
 
-        for (auto i = 1; i <= data.size(); ++i) {
+        for (auto i = 1u; i <= data.size() && outputSize < sizeTotal; ++i) {
             if (i < data.size()) {
                 currentBitSet = std::bitset<8>(data[i]);
                 numberOfCurrentBits = 8;
             }
 
-            for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
+            for (int j = 9 - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; --j) {
                 globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
                 numberOfCurrentBits--;
                 numberOfMeaningBits++;
@@ -180,18 +181,20 @@ namespace decode {
                 var2[0] = globalBitSet[4];
                 loggerPrint(std::to_string(var1.to_ulong()) + " " + std::to_string(var2.to_ulong() + 1));
                 output.push_back({true, ' ', (int) var1.to_ulong(), (int) var2.to_ulong() + LENGTH_OFFSET});
-                globalBitSet = globalBitSet << 1+DICTIONARY_SIZE;
-                numberOfMeaningBits -= (1+DICTIONARY_SIZE);
+                outputSize += 1 + std::log2(DICTIONARY_SIZE) * 2;
+                globalBitSet <<= 1 + std::log2(DICTIONARY_SIZE) * 2;
+                numberOfMeaningBits -= (1 + std::log2(DICTIONARY_SIZE) * 2);
                 loggerPrint("New GlobalBitSet  " + globalBitSet.to_string());
             } else if (numberOfMeaningBits == 9) {
                 auto value = std::bitset<8>(0);
-                for (int z = 0; z < 8; z++) {
+                for (int z = 0; z < 8; ++z) {
                     value[z] = globalBitSet[z];
                 }
                 auto val = value.to_ulong();
-                output.push_back({false, static_cast<char>(val), 0, 0});
+                output.push_back({false, static_cast<unsigned char>(val), 0, 0});
+                outputSize += 9;
 				std::string nextSepararateValue;
-				nextSepararateValue += static_cast<char>(val);
+				nextSepararateValue += static_cast<unsigned char>(val);
 				loggerPrint(nextSepararateValue);
                 numberOfMeaningBits -= 9;
             }
@@ -201,23 +204,23 @@ namespace decode {
                     numberOfCurrentBits--;
                     numberOfMeaningBits++;
                 }
-            };
+            }
         }
 
         return output;
     }
 }
 
-std::vector<char> LZSS::encode(const std::vector<char> &input) const {
+std::tuple<std::vector<unsigned char>, int> LZSS::encode(const std::vector<unsigned char> &input) const {
     loggerPrint("Started Encoding");
     if (input.empty()) return {};
 
     std::vector<ExtendedByte> data;
     auto size = 0;
     std::tie(data, size) = encode::prepareData(input);
-    return encode::toBinary(data, size);
+    return {encode::toBinary(data, size), size};
 }
 
-std::vector<char> LZSS::decode(const std::vector<char> &compressed) const {
-    return decode::decode(decode::fromBinary(compressed));
+std::vector<unsigned char> LZSS::decode(const std::vector<unsigned char> &compressed, int size) const {
+    return decode::decode(decode::fromBinary(compressed, size));
 }

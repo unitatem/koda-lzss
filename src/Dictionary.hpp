@@ -5,20 +5,20 @@
 
 class Dictionary {
 public:
-    Dictionary(int size, char firstElement);
+    Dictionary(int size, unsigned char firstElement);
 
-    void insertBack(char element);
+    void insertBack(unsigned char element);
 
     void shiftOneLeft();
 
-    std::pair<int, int> findMatch(const std::vector<char> &data, int begin, int end);
+    std::pair<int, int> findMatch(const std::vector<unsigned char> &data, int begin, int end);
 
     void print();
 
     char getCharAtGivenIdx(int i);
 
 private:
-    std::vector<char> dictionary;
+    std::vector<unsigned char> dictionary;
 };
 
 #endif

@@ -4,8 +4,6 @@
 #include <ios>
 #include <fstream>
 
-//#define LOGGER_ON
-
 void loggerPrint(std::string text) {
 #ifdef LOGGER_ON
 	std::string output;
@@ -25,7 +23,7 @@ void loggerPrintToFile(std::string text) {
 #endif
 }
 
-void printVector(std::string name, const std::vector<char> vect) {
+void printVector(std::string name, const std::vector<unsigned char> vect) {
 #ifdef LOGGER_ON
 	std::string text;
 	text+=name;
@@ -38,7 +36,7 @@ void printVector(std::string name, const std::vector<char> vect) {
 #endif
 }
 
-void printVectorAsBits(std::string name, const std::vector<char> vect){
+void printVectorAsBits(std::string name, const std::vector<unsigned char> vect){
 #ifdef LOGGER_ON
 	std::string text;
 	text += name;
