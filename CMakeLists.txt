@@ -12,7 +12,9 @@ set(SOURCE_FILES
         src/Logger.cpp
         src/Logger.hpp
         src/LZSS.cpp
-        src/LZSS.hpp)
+        src/LZSS.hpp
+        src/MediaOperations.cpp
+        src/MediaOperations.hpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 include_directories(${OpenCV_INCLUDE_DIRS})

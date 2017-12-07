@@ -4,8 +4,8 @@
 #include <ios>
 #include <fstream>
 
-
 void loggerPrint(std::string text) {
+#ifdef LOGGER_ON
 	std::string output;
 	output += currentDateTime();
 	output += " | ";
@@ -13,14 +13,18 @@ void loggerPrint(std::string text) {
 	output += "\n";
 	std::cout << output;
 	loggerPrintToFile(output);
+#endif
 }
 
 void loggerPrintToFile(std::string text) {
+#ifdef LOGGER_ON
 	std::ofstream log(currentDate() + ".txt", std::ios_base::app | std::ios_base::out);
 	log << text;
+#endif
 }
 
-void printVector(std::string name, const std::vector<char> vect) {
+void printVector(std::string name, const std::vector<unsigned char> vect) {
+#ifdef LOGGER_ON
 	std::string text;
 	text+=name;
 	text.append(" = ");
@@ -29,9 +33,11 @@ void printVector(std::string name, const std::vector<char> vect) {
 		text += ", ";
 	}
 	loggerPrint(text);
+#endif
 }
 
-void printVectorAsBits(std::string name, const std::vector<char> vect){
+void printVectorAsBits(std::string name, const std::vector<unsigned char> vect){
+#ifdef LOGGER_ON
 	std::string text;
 	text += name;
 	text += " = ";
@@ -41,12 +47,14 @@ void printVectorAsBits(std::string name, const std::vector<char> vect){
 	}
 		
 	loggerPrint(text);
+#endif
 }
 
 namespace {
     const std::string getTimeStamp(const char *format) {
         time_t rawTime;
         time (&rawTime);
+#pragma warning(suppress : 4996)
         auto timeInfo = std::localtime(&rawTime);
         char buffer[80];
         strftime(buffer,sizeof(buffer), format,timeInfo);

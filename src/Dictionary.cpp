@@ -1,10 +1,10 @@
 #include "Dictionary.hpp"
 #include "Logger.hpp"
 
-Dictionary::Dictionary(int size, char firstElement)
+Dictionary::Dictionary(int size, unsigned char firstElement)
         : dictionary(size, firstElement) {}
 
-void Dictionary::insertBack(char element) {
+void Dictionary::insertBack(unsigned char element) {
     dictionary[dictionary.size() - 1] = element;
 }
 
@@ -18,7 +18,7 @@ char Dictionary::getCharAtGivenIdx(int i){
 }
 
 // TODO: profile, if too slow refactor with use of moving hash
-std::pair<int, int> Dictionary::findMatch(const std::vector<char> &data,
+std::pair<int, int> Dictionary::findMatch(const std::vector<unsigned char> &data,
                                           int begin, int end) {
     auto maxLength = 0;
     auto idxOfBest = 0;
