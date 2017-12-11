@@ -13,7 +13,7 @@ void Dictionary::shiftOneLeft() {
         dictionary[i] = dictionary[i + 1];
 }
 
-char Dictionary::getCharAtGivenIdx(int i){
+unsigned char Dictionary::getCharAtGivenIdx(int i){
     return dictionary[i];
 }
 

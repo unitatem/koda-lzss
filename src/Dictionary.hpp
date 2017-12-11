@@ -15,7 +15,7 @@ public:
 
     void print();
 
-    char getCharAtGivenIdx(int i);
+    unsigned char getCharAtGivenIdx(int i);
 
 private:
     std::vector<unsigned char> dictionary;
