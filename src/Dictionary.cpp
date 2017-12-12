@@ -1,16 +1,20 @@
 #include "Dictionary.hpp"
 #include "Logger.hpp"
 
+#include <algorithm>
+
 Dictionary::Dictionary(int size, unsigned char firstElement)
         : dictionary(size, firstElement) {}
 
-void Dictionary::insertBack(unsigned char element) {
-    dictionary[dictionary.size() - 1] = element;
+void Dictionary::insertFromBack(unsigned char element, int distToBack) {
+    dictionary[dictionary.size() - distToBack] = element;
 }
 
-void Dictionary::shiftOneLeft() {
-    for (auto i = 0u; i < dictionary.size() - 1; ++i)
-        dictionary[i] = dictionary[i + 1];
+void Dictionary::shiftLeft(int step) {
+    const auto end = dictionary.size() - step;
+    const auto data = dictionary.data();
+    for (auto i = 0u; i < end; ++i)
+        *(data + i) = *(data + i + step);
 }
 
 unsigned char Dictionary::getCharAtGivenIdx(int i){
@@ -20,31 +24,22 @@ unsigned char Dictionary::getCharAtGivenIdx(int i){
 // TODO: profile, if too slow refactor with use of moving hash
 std::pair<int, int> Dictionary::findMatch(const std::vector<unsigned char> &data,
                                           int begin, int end) {
-    auto maxLength = 0;
+    auto beginIterator = std::begin(data) + begin;
+    auto tryMoreIterator = std::begin(data) + begin + 1;
+    const auto endIterator = std::begin(data) + end;
+
     auto idxOfBest = 0;
-
-    auto checkIfNewBest = [&maxLength, &idxOfBest](int &length, auto idx) {
-        if (length > maxLength) {
-            maxLength = length;
-            idxOfBest = idx;
+    auto maxLength = 0;
+    bool repeat;
+    do {
+        auto it = std::search(dictionary.begin(), dictionary.end(), beginIterator, tryMoreIterator);
+        repeat = it != dictionary.end();
+        if (repeat) {
+            idxOfBest = static_cast<int>(it - dictionary.begin());
+            maxLength = static_cast<int>(tryMoreIterator - beginIterator);
+            ++tryMoreIterator;
         }
-        length = 0;
-    };
-
-    auto length = 0;
-    auto idx = 0;
-    // O(n^2), calculated similarly to convolution, one shifts in reference to other
-    for (auto i = 0; i < dictionary.size(); ++i) {
-        for (auto s = 0; s < end - begin && i + s < dictionary.size(); ++s)
-            if (data[begin + length] == dictionary[i + s]) {
-                if (length == 0)
-                    idx = i + s;
-                ++length;
-            } else {
-                checkIfNewBest(length, idx);
-            }
-        checkIfNewBest(length, idx);
-    }
+    } while (repeat && tryMoreIterator < endIterator);
 
     return {idxOfBest, maxLength};
 }

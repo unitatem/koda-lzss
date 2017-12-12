@@ -7,9 +7,9 @@ class Dictionary {
 public:
     Dictionary(int size, unsigned char firstElement);
 
-    void insertBack(unsigned char element);
+    void insertFromBack(unsigned char element, int distToBack);
 
-    void shiftOneLeft();
+    void shiftLeft(int step);
 
     std::pair<int, int> findMatch(const std::vector<unsigned char> &data, int begin, int end);
 
