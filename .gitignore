@@ -15,3 +15,9 @@ cmake-build-debug
 # ubuntu
 .directory
 
+output
+/koda-lzss.sln
+/.vs
+/Debug
+/koda-lzss
+/x64
