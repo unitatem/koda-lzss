@@ -15,9 +15,12 @@ cmake-build-debug
 # ubuntu
 .directory
 
-output
 /koda-lzss.sln
 /.vs
 /Debug
 /koda-lzss
 /x64
+/dane/rozklady/output/*.txt
+/dane/rozklady/output/*.pgm
+/dane/obrazy/output/*.txt
+/dane/obrazy/output/*.pgm
