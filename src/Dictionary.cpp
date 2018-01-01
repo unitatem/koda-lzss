@@ -36,13 +36,16 @@ std::pair<int, int> Dictionary::findMatch(const std::vector<unsigned char> &data
     // O(n^2), calculated similarly to convolution, one shifts in reference to other
     for (auto i = 0; i < dictionary.size(); ++i) {
         for (auto s = 0; s < end - begin && i + s < dictionary.size(); ++s)
-            if (data[begin + length] == dictionary[i + s]) {
-                if (length == 0)
-                    idx = i + s;
-                ++length;
-            } else {
-                checkIfNewBest(length, idx);
-            }
+			if (data.size() > begin + length) {
+				if (data[begin + length] == dictionary[i + s]) {
+					if (length == 0)
+						idx = i + s;
+					++length;
+				}
+				else {
+					checkIfNewBest(length, idx);
+				}
+			}
         checkIfNewBest(length, idx);
     }
 
