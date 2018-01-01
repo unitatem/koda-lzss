@@ -12,5 +12,7 @@ const std::vector<unsigned char> readFile(std::string imageSource);
 const void createFile(std::vector<unsigned char> imageInBytes, std::string outputImagePath);
 const std::vector<unsigned char> getImagePixels(cv::Mat image);
 bool areVectorsIdentical(const std::vector<unsigned char>& vec1, const std::vector<unsigned char>& vec2);
+const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> object, unsigned int maxDepth);
+double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram);
 
 #endif

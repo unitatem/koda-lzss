@@ -3,6 +3,7 @@
 #include "MediaOperations.hpp"
 #include "codec.h"
 #include <thread>
+#include <fstream>
 
 #define DATA
 //#define WIKI_CASE
@@ -22,6 +23,8 @@ int main() {
 	std::string distributions[] = { "geometr_05" , "geometr_09", "geometr_099", "laplace_10", "laplace_20" , "laplace_30", "normal_10", "normal_30", "normal_50", "uniform" };
 
 	std::vector<std::thread> threads;
+
+	//threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
 
 	for each(std::string object in images) {
 		threads.push_back(std::thread(performComputations, imagesFolder, object, codec, outputFolder));
@@ -61,6 +64,7 @@ int main() {
 
 void performComputations(std::string &objectsFolder, std::string &object, LZSS &codec, std::string &outputFolder)
 {
+	std::ofstream calculationsFile;
 	auto loadedPgmImage = readPgmImage(objectsFolder + object + ".pgm");
 	auto rows = loadedPgmImage.rows;
 	auto cols = loadedPgmImage.cols;
@@ -68,7 +72,19 @@ void performComputations(std::string &objectsFolder, std::string &object, LZSS &
 	auto matType = loadedPgmImage.type();
 	std::cout << "Object loaded: " << object << "\n";
 
+	calculationsFile.open(objectsFolder + outputFolder + object + "_calc.txt", std::ios_base::out);
+
 	auto imageToEncode = getImagePixels(loadedPgmImage);
+	auto histogram = calculateHistogram(imageToEncode, 256);
+	double entropy = calculateEntropy(imageToEncode, histogram);
+
+	calculationsFile << "*****INPUT_HISTOGRAM*****\n";
+	for (int i = 0; i < histogram.size(); i++) {
+		calculationsFile << i << " : " << histogram[i] << "\n";
+	}
+	calculationsFile << "*****INPUT_ENTROPY*****\n";
+	calculationsFile << "Entropy : " << entropy;
+
 	std::vector<unsigned char> imageEncoded;
 	int size;
 	std::tie(imageEncoded, size) = codec.encode(imageToEncode);
@@ -84,4 +100,5 @@ void performComputations(std::string &objectsFolder, std::string &object, LZSS &
 		imagesMatch = "_no_match_";
 	createPgmImage(imageDecoded, rows, cols, matType, objectsFolder + outputFolder + object + imagesMatch + "Decoded.pgm");
 	std::cout << "Decoded Object saved: " << object << "\n";
+	calculationsFile.close();
 }
