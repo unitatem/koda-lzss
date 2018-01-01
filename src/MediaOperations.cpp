@@ -49,3 +49,47 @@ const std::vector<unsigned char> getImagePixels(cv::Mat image) {
 	}
 	return output;
 }
+//Comparing vectors for test of integrality
+bool areVectorsIdentical(const std::vector<unsigned char>& vec1, const std::vector<unsigned char>& vec2)
+{
+	if (vec1.size() != vec2.size())
+		return false;
+
+	for (size_t i = 0; i<vec1.size(); i++)
+		if (vec1[i] != vec2[i])
+			return false;
+
+	return true;
+}
+//Calculate histograms
+const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> object, unsigned int maxDepth) {
+	std::vector<unsigned int> localHistogram(maxDepth);
+	for (int i = 0; i < object.size(); i++) {
+		localHistogram[object[i]]++;
+	}
+	return localHistogram;
+}
+//Calculate entropy
+double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
+	double entropy = 0;
+	for (int i = 0; i < histogram.size(); i++) {
+		if (histogram[i] == 0)
+			continue;
+		double iprobability = (double)histogram[i] / (double)object.size();
+		entropy -= iprobability*(std::log2(iprobability) / std::log2(256.));
+	}
+	return entropy;
+}
+//TODO calculate entropy 2-nd and 3-rd degree
+/*double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
+	double entropy = 0;
+	for (int i = 0; i < histogram.size(); i++) {
+		for (int j = 0; j < histogram.size(); j++) {
+
+		}
+		double iprobability = (double)histogram[i] / (double)object.size();
+		entropy -= iprobability*(std::log2(iprobability) / std::log2(256.));
+	}
+	return entropy;
+}
+int countSequence2ndDegree(int symbol1, int symbol2, int symbol3, std::vector<unsigned char> object)*/
