@@ -6,16 +6,9 @@
 #include <string>
 
 //#define LOGGER_ON
-#define ENABLE_DEBUG
 
-#ifdef ENABLE_DEBUG
-#define DEBUG(x) \
-    do { \
-        x; \
-    } while (false)
-#else
-#define DEBUG(X)
-#endif
+#define INFO(x)
+#define DEBUG(x)
 
 void loggerPrint(std::string text);
 void loggerPrintToFile(std::string text);
