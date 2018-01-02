@@ -1,8 +1,11 @@
 #include "Logger.hpp"
 #include "LZSS.hpp"
 #include "MediaOperations.hpp"
+#include "codec.hpp"
+#include <thread>
+#include <fstream>
 
-#define IMAGES
+#define DATA
 //#define WIKI_CASE
 
 int main() {
@@ -11,24 +14,33 @@ int main() {
     loggerPrint("Buffer size: " + std::to_string(WINDOW_SIZE));
     LZSS codec;
 
-#ifdef IMAGES
-    std::string imagesFolder = "../obrazy/";
-    std::string image = "lena";
+#ifdef DATA
+	std::string dataFolder = "../dane/";
+    std::string imagesFolder = dataFolder + "obrazy/";
+	std::string distributionsFolder = dataFolder + "rozklady/";
+	std::string outputFolder = "output/";
+	std::string images[] = { "barbara" , "boat", "chronometer", "lena", "mandril" , "peppers"};
+	std::string distributions[] = { "geometr_05" , "geometr_09", "geometr_099", "laplace_10", "laplace_20" , "laplace_30", "normal_10", "normal_30", "normal_50", "uniform" };
 
-    auto loadedPgmImage = readPgmImage(imagesFolder + image + ".pgm");
-    auto rows = loadedPgmImage.rows;
-    auto cols = loadedPgmImage.cols;
-    assert(rows != 0 && cols != 0);
-    auto matType = loadedPgmImage.type();
+	std::vector<std::thread> threads;
 
-    auto imageToEncode = getImagePixels(loadedPgmImage);
-    std::vector<unsigned char> imageEncoded;
-    int size;
-    std::tie(imageEncoded, size) = codec.encode(imageToEncode);
-    createFile(imageEncoded, imagesFolder + image + "Encoded.txt");
-    auto imageDecoded = codec.decode(imageEncoded, size);
+//  std::thread test(performComputations, imagesFolder, images[0], codec, outputFolder);
+//	threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
 
-    createPgmImage(imageDecoded, rows, cols, matType, imagesFolder + image + "Decoded.pgm");
+	for (std::string object : images) {
+		threads.push_back(std::thread(performComputations, imagesFolder, object, codec, outputFolder));
+	}
+
+	for (std::string object : distributions) {
+		threads.push_back(std::thread(performComputations, distributionsFolder, object, codec, outputFolder));
+	}
+
+	for (auto i = 0; i < threads.size(); ++i) {
+		threads[i].join();
+	}
+
+
+	
 #endif
 #ifdef WIKI_CASE
     // wikipedia test case, https://pl.wikipedia.org/wiki/LZSS
@@ -49,4 +61,46 @@ int main() {
 
     loggerPrint("*******************End*******************");
     return 0;
+}
+
+void performComputations(std::string objectsFolder, std::string object, LZSS codec, std::string outputFolder)
+{
+	std::ofstream calculationsFile;
+	auto loadedPgmImage = readPgmImage(objectsFolder + object + ".pgm");
+	auto rows = loadedPgmImage.rows;
+	auto cols = loadedPgmImage.cols;
+	assert(rows != 0 && cols != 0);
+	auto matType = loadedPgmImage.type();
+	std::cout << "Object loaded: " << object << "\n";
+
+	calculationsFile.open(objectsFolder + outputFolder + object + "_calc.txt", std::ios_base::out);
+
+	auto imageToEncode = getImagePixels(loadedPgmImage);
+	auto histogram = calculateHistogram(imageToEncode, 256);
+	double entropy = calculateEntropy(imageToEncode, histogram);
+
+	calculationsFile << "*****INPUT_HISTOGRAM*****\n";
+	for (int i = 0; i < histogram.size(); i++) {
+		calculationsFile << i << " : " << histogram[i] << "\n";
+	}
+	calculationsFile << "*****INPUT_ENTROPY*****\n";
+	calculationsFile << "Entropy : " << entropy;
+	//double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
+
+	std::vector<unsigned char> imageEncoded;
+	int size;
+	std::tie(imageEncoded, size) = codec.encode(imageToEncode);
+	std::cout << "Object encoded: " << object << "\n";
+	createFile(imageEncoded, objectsFolder + outputFolder + object + "Encoded.txt");
+	std::cout << "Encoded Object saved: " << object << "\n";
+	auto imageDecoded = codec.decode(imageEncoded, size);
+	std::cout << "Object decoded: " << object << "\n";
+	std::string imagesMatch;
+	if (areVectorsIdentical(imageToEncode, imageDecoded))
+		imagesMatch = "_match_";
+	else
+		imagesMatch = "_no_match_";
+	createPgmImage(imageDecoded, rows, cols, matType, objectsFolder + outputFolder + object + imagesMatch + "Decoded.pgm");
+	std::cout << "Decoded Object saved: " << object << "\n";
+	calculationsFile.close();
 }

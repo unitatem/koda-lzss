@@ -1,10 +1,10 @@
 #include "Dictionary.hpp"
 #include "Logger.hpp"
 #include "LZSS.hpp"
-
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <algorithm>
 
 struct CodecBatchData {
     bool useDictionary;

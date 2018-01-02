@@ -4,7 +4,7 @@
 #include <tuple>
 #include <vector>
 
-#define DICTIONARY_SIZE        10000
+#define DICTIONARY_SIZE        256
 #define WINDOW_SIZE            DICTIONARY_SIZE
 
 class LZSS {
