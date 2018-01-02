@@ -1,7 +1,7 @@
 #include "Logger.hpp"
 #include "LZSS.hpp"
 #include "MediaOperations.hpp"
-#include "codec.h"
+#include "codec.hpp"
 #include <thread>
 #include <fstream>
 
@@ -24,17 +24,18 @@ int main() {
 
 	std::vector<std::thread> threads;
 
-	//threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
+//  std::thread test(performComputations, imagesFolder, images[0], codec, outputFolder);
+//	threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
 
-	for each(std::string object in images) {
+	for (std::string object : images) {
 		threads.push_back(std::thread(performComputations, imagesFolder, object, codec, outputFolder));
 	}
 
-	for each(std::string object in distributions) {
+	for (std::string object : distributions) {
 		threads.push_back(std::thread(performComputations, distributionsFolder, object, codec, outputFolder));
 	}
 
-	for (int i = 0; i < threads.size(); i++) {
+	for (auto i = 0; i < threads.size(); ++i) {
 		threads[i].join();
 	}
 
@@ -62,7 +63,7 @@ int main() {
     return 0;
 }
 
-void performComputations(std::string &objectsFolder, std::string &object, LZSS &codec, std::string &outputFolder)
+void performComputations(std::string objectsFolder, std::string object, LZSS codec, std::string outputFolder)
 {
 	std::ofstream calculationsFile;
 	auto loadedPgmImage = readPgmImage(objectsFolder + object + ".pgm");
