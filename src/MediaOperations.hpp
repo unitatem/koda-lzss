@@ -14,5 +14,8 @@ const std::vector<unsigned char> getImagePixels(cv::Mat image);
 bool areVectorsIdentical(const std::vector<unsigned char>& vec1, const std::vector<unsigned char>& vec2);
 const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> object, unsigned int maxDepth);
 double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram);
+double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram);
 
+std::tuple<double, double> countSequence2WithSpace(int symbol1, int symbol2, std::vector<unsigned char> object);
+double calculateInfo2DegreeProbability(int symbol1, int symbol2, int symbol3, std::vector<unsigned char> object, double counterSequenceWithSpace);
 #endif

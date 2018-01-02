@@ -80,16 +80,49 @@ double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned 
 	}
 	return entropy;
 }
-//TODO calculate entropy 2-nd and 3-rd degree
-/*double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
+//Calculate entropy 2-nd degree
+double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
+	std::vector<double> stateEntropy(histogram.size()*histogram.size());
 	double entropy = 0;
-	for (int i = 0; i < histogram.size(); i++) {
+	for (int i = 0; i < stateEntropy.size(); i++) {
+		stateEntropy[i] = 0;
+	}
+	for (int i = 0; i < histogram.size(); i++) {//i, j - stany, a k - konkretna wartoœæ
 		for (int j = 0; j < histogram.size(); j++) {
-
+			auto counters2D = countSequence2WithSpace(i, j, object);
+			double counterSequence2D = std::get<0>(counters2D);
+			double counterSequence2DWithSpace = std::get<1>(counters2D);
+			for (int k = 0; k < histogram.size(); k++) {
+				double iprobability = calculateInfo2DegreeProbability(i, j, k, object, counterSequence2DWithSpace);
+				if (iprobability <= 0)
+					continue;
+				stateEntropy[i*histogram.size() + j]-= iprobability*(std::log2(iprobability) / std::log2(256.));
+			}
+			entropy += stateEntropy[i*histogram.size() + j] * (counterSequence2D / (double)(object.size() - 1));
 		}
-		double iprobability = (double)histogram[i] / (double)object.size();
-		entropy -= iprobability*(std::log2(iprobability) / std::log2(256.));
 	}
 	return entropy;
 }
-int countSequence2ndDegree(int symbol1, int symbol2, int symbol3, std::vector<unsigned char> object)*/
+
+std::tuple<double, double> countSequence2WithSpace(int symbol1, int symbol2, std::vector<unsigned char> object) {
+	int counter = 0;
+	int counterWithSpace = 0;
+	for (int i = 0; i < object.size() - 1; i++) {
+		if (object[i] == symbol1 && object[i + 1] == symbol2) {
+			counter++;
+			if ((i + 2) < object.size())
+				counterWithSpace++;
+		}
+	}
+	return std::make_tuple((double)counter, (double)counterWithSpace);
+}
+
+double calculateInfo2DegreeProbability(int symbol1, int symbol2, int symbol3, std::vector<unsigned char> object, double counterSequenceWithSpace) {
+	double counterSequence = 0;
+	for (int i = 0; i < object.size() - 2; i++) {
+		if (object[i] == symbol1 && object[i + 1] == symbol2 && object[i + 2] == symbol3) {
+			counterSequence++;
+		}
+	}
+	return counterSequence / counterSequenceWithSpace;
+}

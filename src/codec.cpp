@@ -84,6 +84,7 @@ void performComputations(std::string &objectsFolder, std::string &object, LZSS &
 	}
 	calculationsFile << "*****INPUT_ENTROPY*****\n";
 	calculationsFile << "Entropy : " << entropy;
+	//double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
 
 	std::vector<unsigned char> imageEncoded;
 	int size;
