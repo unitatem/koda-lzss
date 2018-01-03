@@ -207,11 +207,11 @@ namespace decode {
 
             if (input[i].useDictionary) {
                 auto endPosition = input[i].startPositionIdx + input[i].matchLength;
-                dict.shiftLeft(endPosition - input[i].startPositionIdx);
-                for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; ++j) {
+                for (int j = input[i].startPositionIdx; j < endPosition; ++j) {
                     auto outputValue = dict.getCharAtGivenIdx(input[i].startPositionIdx);
                     output.push_back(outputValue);
-                    dict.insertFromBack(outputValue, endPosition - j);
+                    dict.shiftLeft(1);
+                    dict.insertFromBack(outputValue, 1);
                 }
             } else {
                 output.push_back(input[i].value);
