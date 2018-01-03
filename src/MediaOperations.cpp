@@ -17,8 +17,8 @@ const cv::Mat readPgmImage(std::string imageSource) {
 	return image;
 }
 //Creates and saves the image from imageInBytes at outputImagePath
-const void createPgmImage(std::vector<unsigned char> imageInBytes, int rows, int cols, int matType, std::string outputImagePath) {
-	assert(rows * cols == imageInBytes.size());
+void createPgmImage(std::vector<unsigned char> imageInBytes, int rows, int cols, int matType, std::string outputImagePath) {
+	assert((unsigned)rows * cols == imageInBytes.size());
 	Mat mat(rows, cols, matType);
 	memcpy(mat.data, &imageInBytes[0], imageInBytes.size());
 	imwrite(outputImagePath, mat);
@@ -31,7 +31,7 @@ const std::vector<unsigned char> readFile(std::string imageSource) {
 	return contents;
 }
 //Creates any file from imageInBytes at outputImagePath
-const void createFile(std::vector<unsigned char> imageInBytes, std::string outputImagePath) {
+void createFile(std::vector<unsigned char> imageInBytes, std::string outputImagePath) {
 	ofstream textout(outputImagePath, ios::out | ios::binary);
 	textout.write((const char*)&imageInBytes[0], imageInBytes.size());
 	textout.close();
@@ -64,7 +64,7 @@ bool areVectorsIdentical(const std::vector<unsigned char>& vec1, const std::vect
 //Calculate histograms
 const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> object, unsigned int maxDepth) {
 	std::vector<unsigned int> localHistogram(maxDepth);
-	for (int i = 0; i < object.size(); i++) {
+	for (auto i = 0u; i < object.size(); i++) {
 		localHistogram[object[i]]++;
 	}
 	return localHistogram;
@@ -72,7 +72,7 @@ const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> ob
 //Calculate entropy
 double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
 	double entropy = 0;
-	for (int i = 0; i < histogram.size(); i++) {
+	for (auto i = 0u; i < histogram.size(); i++) {
 		if (histogram[i] == 0)
 			continue;
 		double iprobability = (double)histogram[i] / (double)object.size();
@@ -84,15 +84,15 @@ double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned 
 double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
 	std::vector<double> stateEntropy(histogram.size()*histogram.size());
 	double entropy = 0;
-	for (int i = 0; i < stateEntropy.size(); i++) {
+	for (auto i = 0u; i < stateEntropy.size(); i++) {
 		stateEntropy[i] = 0;
 	}
-	for (int i = 0; i < histogram.size(); i++) {//i, j - stany, a k - konkretna wartoœæ
-		for (int j = 0; j < histogram.size(); j++) {
+	for (auto i = 0u; i < histogram.size(); i++) {//i, j - stany, a k - konkretna wartoï¿½ï¿½
+		for (auto j = 0u; j < histogram.size(); j++) {
 			auto counters2D = countSequence2WithSpace(i, j, object);
 			double counterSequence2D = std::get<0>(counters2D);
 			double counterSequence2DWithSpace = std::get<1>(counters2D);
-			for (int k = 0; k < histogram.size(); k++) {
+			for (auto k = 0u; k < histogram.size(); k++) {
 				double iprobability = calculateInfo2DegreeProbability(i, j, k, object, counterSequence2DWithSpace);
 				if (iprobability <= 0)
 					continue;
@@ -107,7 +107,7 @@ double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<un
 std::tuple<double, double> countSequence2WithSpace(int symbol1, int symbol2, std::vector<unsigned char> object) {
 	int counter = 0;
 	int counterWithSpace = 0;
-	for (int i = 0; i < object.size() - 1; i++) {
+	for (auto i = 0u; i < object.size() - 1; i++) {
 		if (object[i] == symbol1 && object[i + 1] == symbol2) {
 			counter++;
 			if ((i + 2) < object.size())
@@ -119,7 +119,7 @@ std::tuple<double, double> countSequence2WithSpace(int symbol1, int symbol2, std
 
 double calculateInfo2DegreeProbability(int symbol1, int symbol2, int symbol3, std::vector<unsigned char> object, double counterSequenceWithSpace) {
 	double counterSequence = 0;
-	for (int i = 0; i < object.size() - 2; i++) {
+	for (auto i = 0u; i < object.size() - 2; i++) {
 		if (object[i] == symbol1 && object[i + 1] == symbol2 && object[i + 2] == symbol3) {
 			counterSequence++;
 		}

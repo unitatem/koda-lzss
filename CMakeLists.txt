@@ -12,9 +12,10 @@ set(SOURCE_FILES
         src/LZSS.cpp
         src/MediaOperations.cpp)
 
+#set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_BUILD_TYPE Release)
-# set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
