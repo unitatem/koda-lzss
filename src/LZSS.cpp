@@ -14,7 +14,11 @@ struct CodecBatchData {
 };
 
 const int LENGTH_OFFSET = 1;
-const int DICTIONARY_BITS_COUNT = static_cast<int>(std::ceil(std::log2(DICTIONARY_SIZE)));
+#if ((1 + 2 * DICTIONARY_BITS_COUNT) > 9)
+#define bitSetSize (1 + 2 * DICTIONARY_BITS_COUNT)
+#else
+#define bitSetSize 9
+#endif
 
 namespace encode {
     std::pair<std::vector<CodecBatchData>, int> prepareData(const std::vector<unsigned char> &input) {
@@ -115,7 +119,6 @@ namespace decode {
         int outputSize = 8;
         INFO(loggerPrint(std::to_string(output[0].value));)
 
-        const auto bitSetSize = std::max(9, 1 + 2 * DICTIONARY_BITS_COUNT);
         auto globalBitSet = std::bitset<bitSetSize>(0);
         int numberOfMeaningBits = 0;
         auto currentBitSet = std::bitset<bitSetSize - 1 + 8>(0);
