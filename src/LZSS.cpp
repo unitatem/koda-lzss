@@ -68,7 +68,7 @@ namespace encode {
     std::vector<unsigned char> toBinary(const std::vector<CodecBatchData> &data, unsigned int bitCount) {
         INFO(loggerPrint("Binary encoded bits string");)
 
-        unsigned int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
+        const unsigned int outputSizeInBytes = bitCount / 8 + (bitCount % 8 ? 1 : 0);
         std::vector<unsigned char> output(outputSizeInBytes);
 
         output[0] = data[0].value;
@@ -98,6 +98,8 @@ namespace encode {
         if (size)
             output[outputIdx] = static_cast<unsigned char>(buffer << (8 - size));
 
+        assert(output.size() == outputSizeInBytes);
+        // outputIdx show next available space therefore this formula is correct
         assert(outputIdx + (bitCount % 8 ? 1 : 0) == outputSizeInBytes);
         return output;
     }
@@ -161,6 +163,7 @@ namespace decode {
                     outputSize += 1 + 2 * DICTIONARY_BITS_COUNT;
                     globalBitSet <<= 1 + 2 * DICTIONARY_BITS_COUNT;
                     numberOfMeaningBits -= (1 + 2 * DICTIONARY_BITS_COUNT);
+                    assert(numberOfMeaningBits >= 0);
                     INFO(loggerPrint("New GlobalBitSet  " + globalBitSet.to_string());)
                 } else if (numberOfMeaningBits >= 9) {
                     auto valueBitSet = std::bitset<8>(0);
@@ -171,9 +174,12 @@ namespace decode {
                     outputSize += 9;
                     globalBitSet <<= 9;
                     numberOfMeaningBits -= 9;
+                    assert(numberOfMeaningBits >= 0);
                     INFO(loggerPrint(std::to_string(static_cast<unsigned char>(value)));)
                 }
-                if (numberOfCurrentBits > 0) {
+                if (numberOfMeaningBits == bitSetSize) {
+                    repeatLoop = true;
+                } else if (numberOfCurrentBits > 0) {
                     for (int j = bitSetSize - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
                         globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
                         numberOfCurrentBits--;
@@ -184,9 +190,13 @@ namespace decode {
                         }
                     }
                 }
+                if (d == data.size() && outputSize < sizeTotal && numberOfMeaningBits > 0) {
+                    repeatLoop = true;
+                }
             } while (repeatLoop);
         }
 
+        assert(outputSize == sizeTotal);
         assert(outputSize == sizeTotal);
         return output;
     }
@@ -207,11 +217,11 @@ namespace decode {
 
             if (input[i].useDictionary) {
                 auto endPosition = input[i].startPositionIdx + input[i].matchLength;
-                dict.shiftLeft(endPosition - input[i].startPositionIdx);
-                for (int j = input[i].startPositionIdx; j < input[i].startPositionIdx + input[i].matchLength; ++j) {
+                for (int j = input[i].startPositionIdx; j < endPosition; ++j) {
                     auto outputValue = dict.getCharAtGivenIdx(input[i].startPositionIdx);
                     output.push_back(outputValue);
-                    dict.insertFromBack(outputValue, endPosition - j);
+                    dict.shiftLeft(1);
+                    dict.insertFromBack(outputValue, 1);
                 }
             } else {
                 output.push_back(input[i].value);
@@ -235,6 +245,7 @@ std::tuple<std::vector<unsigned char>, int> LZSS::encode(const std::vector<unsig
 }
 
 std::vector<unsigned char> LZSS::decode(const std::vector<unsigned char> &compressed, int size) const {
+    assert(compressed.size() == (unsigned)size / 8 + (size % 8 ? 1 : 0));
     auto metaData = decode::fromBinary(compressed, size);
     return decode::decode(metaData);
 }

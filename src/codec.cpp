@@ -35,7 +35,7 @@ int main() {
 		threads.push_back(std::thread(performComputations, distributionsFolder, object, codec, outputFolder));
 	}
 
-	for (auto i = 0; i < threads.size(); ++i) {
+	for (auto i = 0u; i < threads.size(); ++i) {
 		threads[i].join();
 	}
 
@@ -80,7 +80,7 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	double entropy = calculateEntropy(imageToEncode, histogram);
 
 	calculationsFile << "*****INPUT_HISTOGRAM*****\n";
-	for (int i = 0; i < histogram.size(); i++) {
+	for (auto i = 0u; i < histogram.size(); i++) {
 		calculationsFile << i << " : " << histogram[i] << "\n";
 	}
 	calculationsFile << "*****INPUT_ENTROPY*****\n";
