@@ -41,7 +41,9 @@ namespace encode {
                 loggerPrint("BUFFER : " + buffer);)
             auto start = 0;
             auto length = 0;
-            std::tie(start, length) = dict.findMatch(input, i, i + WINDOW_SIZE);
+			auto endIter = (i + WINDOW_SIZE) >= input.size() ? input.size() - 1 : i + WINDOW_SIZE;
+			if (i < endIter)
+				std::tie(start, length) = dict.findMatch(input, i, endIter);
 
             // if pattern in dictionary matched
             // and dictionary use is more efficient than direct data send
