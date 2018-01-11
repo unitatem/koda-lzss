@@ -88,10 +88,6 @@ namespace encode {
         for (auto d = 1u; d < data.size(); ++d) {
             if (data[d].useDictionary) {
                 buffer <<= 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
-                if (data[d].matchLength >= DICTIONARY_MATCH_LENGTH) {
-                    std::cout << data[d].matchLength << " " << DICTIONARY_MATCH_LENGTH << std::endl;
-                    int mock = 7;
-                }
                 assert(data[d].startPositionIdx < DICTIONARY_SIZE);
                 assert(data[d].matchLength < DICTIONARY_MATCH_LENGTH);
                 buffer |= (data[d].startPositionIdx << DICTIONARY_MATCH_LENGTH_BITS) | data[d].matchLength;
