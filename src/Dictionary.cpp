@@ -40,6 +40,8 @@ std::pair<int, int> Dictionary::findMatch(const std::vector<unsigned char> &data
             ++tryMoreIterator;
         }
     } while (repeat && tryMoreIterator < endIterator && maxLength <= maxMatchLength);
+    if (maxLength > maxMatchLength)
+        maxLength = maxMatchLength;
 
     return {idxOfBest, maxLength};
 }

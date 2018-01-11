@@ -4,7 +4,7 @@
 #include <tuple>
 #include <vector>
 
-#define DICTIONARY_SIZE_BITS   5
+#define DICTIONARY_SIZE_BITS   10
 #define DICTIONARY_SIZE        (1 << DICTIONARY_SIZE_BITS)
 
 #define DICTIONARY_MATCH_LENGTH_BITS    3
