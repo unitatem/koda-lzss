@@ -3,8 +3,8 @@
 
 #include <algorithm>
 
-Dictionary::Dictionary(int size, unsigned char firstElement)
-        : dictionary(size, firstElement) {}
+Dictionary::Dictionary(int size, int max_match_length, unsigned char firstElement)
+        : dictionary(size, firstElement), maxMatchLength(max_match_length) {}
 
 void Dictionary::insertFromBack(unsigned char element, int distToBack) {
     dictionary[dictionary.size() - distToBack] = element;
@@ -39,7 +39,7 @@ std::pair<int, int> Dictionary::findMatch(const std::vector<unsigned char> &data
             maxLength = static_cast<int>(tryMoreIterator - beginIterator);
             ++tryMoreIterator;
         }
-    } while (repeat && tryMoreIterator < endIterator);
+    } while (repeat && tryMoreIterator < endIterator && maxLength <= maxMatchLength);
 
     return {idxOfBest, maxLength};
 }

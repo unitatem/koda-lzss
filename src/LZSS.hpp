@@ -4,9 +4,12 @@
 #include <tuple>
 #include <vector>
 
-#define DICTIONARY_SIZE        10000
-//const int DICTIONARY_BITS_COUNT = static_cast<int>(std::ceil(std::log2(DICTIONARY_SIZE)));
-#define DICTIONARY_BITS_COUNT  14
+#define DICTIONARY_SIZE_BITS   5
+#define DICTIONARY_SIZE        (1 << DICTIONARY_SIZE_BITS)
+
+#define DICTIONARY_MATCH_LENGTH_BITS    3
+#define DICTIONARY_MATCH_LENGTH         (1 << DICTIONARY_MATCH_LENGTH_BITS)
+
 #define WINDOW_SIZE            DICTIONARY_SIZE
 
 class LZSS {

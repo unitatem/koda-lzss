@@ -5,7 +5,7 @@
 
 class Dictionary {
 public:
-    Dictionary(int size, unsigned char firstElement);
+    Dictionary(int size, int max_match_length, unsigned char firstElement);
 
     void insertFromBack(unsigned char element, int distToBack);
 
@@ -19,6 +19,7 @@ public:
 
 private:
     std::vector<unsigned char> dictionary;
+    int maxMatchLength;
 };
 
 #endif
