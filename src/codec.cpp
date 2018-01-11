@@ -24,16 +24,16 @@ int main() {
 
 	std::vector<std::thread> threads;
 
-//  std::thread test(performComputations, imagesFolder, images[0], codec, outputFolder);
-//	threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
+ /* std::thread test(performComputations, imagesFolder, images[0], codec, outputFolder);*/
+	threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
 
-	for (std::string object : images) {
+	/*for (std::string object : images) {
 		threads.push_back(std::thread(performComputations, imagesFolder, object, codec, outputFolder));
 	}
 
 	for (std::string object : distributions) {
 		threads.push_back(std::thread(performComputations, distributionsFolder, object, codec, outputFolder));
-	}
+	}*/
 
 	for (auto i = 0u; i < threads.size(); ++i) {
 		threads[i].join();
@@ -85,7 +85,7 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	}
 	calculationsFile << "*****INPUT_ENTROPY*****\n";
 	calculationsFile << "Entropy : " << entropy;
-	//double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
+	double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
 
 	std::vector<unsigned char> imageEncoded;
 	int size;

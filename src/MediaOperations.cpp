@@ -87,11 +87,17 @@ double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<un
 	for (auto i = 0u; i < stateEntropy.size(); i++) {
 		stateEntropy[i] = 0;
 	}
-	for (auto i = 0u; i < histogram.size(); i++) {//i, j - stany, a k - konkretna warto��
+	for (auto i = 0u; i < histogram.size(); i++) {//i, j - stany, a k - konkretna wartość
+		if (histogram[i] == 0)
+			continue;
 		for (auto j = 0u; j < histogram.size(); j++) {
+			if (histogram[j] == 0)
+				continue;
 			auto counters2D = countSequence2WithSpace(i, j, object);
 			double counterSequence2D = std::get<0>(counters2D);
 			double counterSequence2DWithSpace = std::get<1>(counters2D);
+			if (counterSequence2DWithSpace == 0)
+				continue;
 			for (auto k = 0u; k < histogram.size(); k++) {
 				double iprobability = calculateInfo2DegreeProbability(i, j, k, object, counterSequence2DWithSpace);
 				if (iprobability <= 0)
