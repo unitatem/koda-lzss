@@ -69,6 +69,22 @@ const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> ob
 	}
 	return localHistogram;
 }
+//Calculate block 2-degree histogram for entropy
+const std::vector<unsigned int> calculateBlockHistogram2Degree(std::vector<unsigned char> object, unsigned int maxDepth) {
+	std::vector<unsigned int> localHistogram(maxDepth*maxDepth);
+	for (auto i = 0u; i < object.size()-1; i=i+2) {
+		localHistogram[object[i]*256 + object[i+1]]++;
+	}
+	return localHistogram;
+}
+//Calculate block 3-degree histogram for entropy
+const std::vector<unsigned int> calculateBlockHistogram3Degree(std::vector<unsigned char> object, unsigned int maxDepth) {
+	std::vector<unsigned int> localHistogram(maxDepth*maxDepth*maxDepth);
+	for (auto i = 0u; i < object.size()-2; i=i+3) {
+		localHistogram[object[i]*256*256 + object[i+1]*256 + object[i+2]]++;
+	}
+	return localHistogram;
+}
 //Calculate entropy
 double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
 	double entropy = 0;
@@ -87,11 +103,17 @@ double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<un
 	for (auto i = 0u; i < stateEntropy.size(); i++) {
 		stateEntropy[i] = 0;
 	}
-	for (auto i = 0u; i < histogram.size(); i++) {//i, j - stany, a k - konkretna warto��
+	for (auto i = 0u; i < histogram.size(); i++) {//i, j - stany, a k - konkretna wartość
+		if (histogram[i] == 0)
+			continue;
 		for (auto j = 0u; j < histogram.size(); j++) {
+			if (histogram[j] == 0)
+				continue;
 			auto counters2D = countSequence2WithSpace(i, j, object);
 			double counterSequence2D = std::get<0>(counters2D);
 			double counterSequence2DWithSpace = std::get<1>(counters2D);
+			if (counterSequence2DWithSpace == 0)
+				continue;
 			for (auto k = 0u; k < histogram.size(); k++) {
 				double iprobability = calculateInfo2DegreeProbability(i, j, k, object, counterSequence2DWithSpace);
 				if (iprobability <= 0)
@@ -100,6 +122,30 @@ double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<un
 			}
 			entropy += stateEntropy[i*histogram.size() + j] * (counterSequence2D / (double)(object.size() - 1));
 		}
+	}
+	return entropy;
+}
+
+double calculateBlockEntropy2Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram)
+{
+	double entropy = 0;
+	for (auto i = 0u; i < histogram.size(); i++) {
+		if (histogram[i] == 0)
+			continue;
+		double iprobability = (double)histogram[i] / (double)(object.size()/2);
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
+	}
+	return entropy;
+}
+
+double calculateBlockEntropy3Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram)
+{
+	double entropy = 0;
+	for (auto i = 0u; i < histogram.size(); i++) {
+		if (histogram[i] == 0)
+			continue;
+		double iprobability = (double)histogram[i] / (double)(object.size() / 3);
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
 	}
 	return entropy;
 }

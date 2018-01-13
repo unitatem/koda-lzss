@@ -7,6 +7,7 @@
 
 #define DATA
 //#define WIKI_CASE
+#define DATADEPTH 256
 
 int main() {
     loggerPrint("*******************Start*******************");
@@ -24,8 +25,7 @@ int main() {
 
 	std::vector<std::thread> threads;
 
-//  std::thread test(performComputations, imagesFolder, images[0], codec, outputFolder);
-//	threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));
+	/*threads.push_back(std::thread(performComputations, imagesFolder, images[0], codec, outputFolder));*/
 
 	for (std::string object : images) {
 		threads.push_back(std::thread(performComputations, imagesFolder, object, codec, outputFolder));
@@ -72,35 +72,53 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	assert(rows != 0 && cols != 0);
 	auto matType = loadedPgmImage.type();
 	std::cout << "Object loaded: " << object << "\n";
-
-	calculationsFile.open(objectsFolder + outputFolder + object + "_calc.txt", std::ios_base::out);
+	std::string dictWndSize = "_dictSize=" + std::to_string(DICTIONARY_SIZE) + "_windowSize=" + std::to_string(WINDOW_SIZE);
+	calculationsFile.open(objectsFolder + outputFolder + object + dictWndSize + "_calc.txt", std::ios_base::out);
 
 	auto imageToEncode = getImagePixels(loadedPgmImage);
-	auto histogram = calculateHistogram(imageToEncode, 256);
+	auto histogram = calculateHistogram(imageToEncode, DATADEPTH);
+	auto blockHistogram2Degree = calculateBlockHistogram2Degree(imageToEncode, DATADEPTH);
+	auto blockHistogram3Degree = calculateBlockHistogram3Degree(imageToEncode, DATADEPTH);
 	double entropy = calculateEntropy(imageToEncode, histogram);
+	double blockEntropy2Degree = calculateBlockEntropy2Degree(imageToEncode, histogram);
+	double blockEntropy3Degree = calculateBlockEntropy3Degree(imageToEncode, histogram);
 
-	calculationsFile << "*****INPUT_HISTOGRAM*****\n";
-	for (auto i = 0u; i < histogram.size(); i++) {
-		calculationsFile << i << " : " << histogram[i] << "\n";
-	}
 	calculationsFile << "*****INPUT_ENTROPY*****\n";
-	calculationsFile << "Entropy : " << entropy;
+	calculationsFile << "Entropy : " << entropy << "\n";
+	calculationsFile << "Block Entropy 2 Degree : " << blockEntropy2Degree << "\n";
+	calculationsFile << "Block Entropy 3 Degree : " << blockEntropy3Degree << "\n";
+	calculationsFile << "*****DICTIONARY&WINDOW_SIZE*****\n";
+	calculationsFile << dictWndSize << "\n";
+
 	//double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
+
+	double entropy2DegreeBlockSource = calculateBlockEntropy2Degree(imageToEncode, histogram);
+	double entropy3DegreeBlockSource = calculateBlockEntropy3Degree(imageToEncode, histogram);
 
 	std::vector<unsigned char> imageEncoded;
 	int size;
 	std::tie(imageEncoded, size) = codec.encode(imageToEncode);
+	calculationsFile << "*****FILES_SIZE*****\n";
+	calculationsFile << "Original size (bytes) : " << std::to_string(imageToEncode.size()) << "\n";
+	calculationsFile << "Encoded size (bytes) : " << std::to_string(imageEncoded.size()) << "\n";
 	std::cout << "Object encoded: " << object << "\n";
-	createFile(imageEncoded, objectsFolder + outputFolder + object + "Encoded.txt");
+	createFile(imageEncoded, objectsFolder + outputFolder + object + dictWndSize + "Encoded.txt");
 	std::cout << "Encoded Object saved: " << object << "\n";
 	auto imageDecoded = codec.decode(imageEncoded, size);
+	calculationsFile << "Decoded size (bytes) : " << std::to_string(imageDecoded.size()) << "\n";
 	std::cout << "Object decoded: " << object << "\n";
 	std::string imagesMatch;
 	if (areVectorsIdentical(imageToEncode, imageDecoded))
 		imagesMatch = "_match_";
 	else
 		imagesMatch = "_no_match_";
-	createPgmImage(imageDecoded, rows, cols, matType, objectsFolder + outputFolder + object + imagesMatch + "Decoded.pgm");
+	calculationsFile << "*****MATCH_STATUS*****\n";
+	calculationsFile << imagesMatch << "\n";
+	calculationsFile << "*****INPUT_HISTOGRAM*****\n";
+	for (auto i = 0u; i < histogram.size(); i++) {
+		calculationsFile << i << " : " << histogram[i] << "\n";
+	}
+	createPgmImage(imageDecoded, rows, cols, matType, objectsFolder + outputFolder + object + imagesMatch + dictWndSize + "Decoded.pgm");
 	std::cout << "Decoded Object saved: " << object << "\n";
 	calculationsFile.close();
 }

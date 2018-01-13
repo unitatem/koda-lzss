@@ -14,11 +14,15 @@ struct CodecBatchData {
 };
 
 const int LENGTH_OFFSET = 1;
-const int DICTIONARY_BITS_COUNT = static_cast<int>(std::ceil(std::log2(DICTIONARY_SIZE)));
+#if ((1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS) > 9)
+#define BITSET_SIZE_BITS (1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS)
+#else
+#define BITSET_SIZE_BITS 9
+#endif
 
 namespace encode {
     std::pair<std::vector<CodecBatchData>, int> prepareData(const std::vector<unsigned char> &input) {
-        Dictionary dict{DICTIONARY_SIZE, input.front()};
+        Dictionary dict{DICTIONARY_SIZE, DICTIONARY_MATCH_LENGTH, input.front()};
 
         std::vector<CodecBatchData> output;
         output.push_back({false, input.front(), 0, 0});
@@ -37,15 +41,18 @@ namespace encode {
                 loggerPrint("BUFFER : " + buffer);)
             auto start = 0;
             auto length = 0;
-            std::tie(start, length) = dict.findMatch(input, i, i + WINDOW_SIZE);
+			auto endIter = (i + WINDOW_SIZE) >= input.size() ? input.size() - 1 : i + WINDOW_SIZE;
+			if (i < endIter)
+				std::tie(start, length) = dict.findMatch(input, i, endIter);
 
             // if pattern in dictionary matched
             // and dictionary use is more efficient than direct data send
-            if (length && (1 + 2 * DICTIONARY_BITS_COUNT < length * 9)) {
+            if (length && (1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS < length * 9)) {
                 INFO(loggerPrint("0 " + std::to_string(start) + " " + std::to_string(length));)
 
+                assert(length - LENGTH_OFFSET < DICTIONARY_MATCH_LENGTH);
                 output.push_back({true, 0, start, length - LENGTH_OFFSET});
-                bitSize += 1 + 2 * DICTIONARY_BITS_COUNT;
+                bitSize += 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
                 dict.shiftLeft(length);
                 for (auto l = 0; l < length; ++l)
                     dict.insertFromBack(input[i + l], length - l);
@@ -75,15 +82,18 @@ namespace encode {
         auto outputIdx = 1u;
         INFO(loggerPrint((std::bitset<8>(output[0]).to_string()));)
 
-        assert(1 + 2 * DICTIONARY_BITS_COUNT <= 56);
+        assert(1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS <= 56);
         uint64_t buffer = 0;
         auto size = 0u;
         for (auto d = 1u; d < data.size(); ++d) {
             if (data[d].useDictionary) {
-                buffer <<= 1 + 2 * DICTIONARY_BITS_COUNT;
-                buffer |= (data[d].startPositionIdx << DICTIONARY_BITS_COUNT) | data[d].matchLength;
-                size += 1 + 2 * DICTIONARY_BITS_COUNT;
-                INFO(loggerPrint(std::to_string((data[d].startPositionIdx << DICTIONARY_BITS_COUNT) | data[d].matchLength));)
+                buffer <<= 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
+                assert(data[d].startPositionIdx < DICTIONARY_SIZE);
+                assert(data[d].matchLength < DICTIONARY_MATCH_LENGTH);
+                buffer |= (data[d].startPositionIdx << DICTIONARY_MATCH_LENGTH_BITS) | data[d].matchLength;
+                size += 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
+
+                INFO(loggerPrint(std::to_string((data[d].startPositionIdx << DICTIONARY_MATCH_LENGTH_BITS) | data[d].matchLength));)
             } else {
                 buffer <<= 1 + 8;
                 buffer |= (1 << 8) | data[d].value;
@@ -115,28 +125,27 @@ namespace decode {
         int outputSize = 8;
         INFO(loggerPrint(std::to_string(output[0].value));)
 
-        const auto bitSetSize = std::max(9, 1 + 2 * DICTIONARY_BITS_COUNT);
-        auto globalBitSet = std::bitset<bitSetSize>(0);
+        auto globalBitSet = std::bitset<BITSET_SIZE_BITS>(0);
         int numberOfMeaningBits = 0;
-        auto currentBitSet = std::bitset<bitSetSize - 1 + 8>(0);
+        auto currentBitSet = std::bitset<BITSET_SIZE_BITS - 1 + 8>(0);
         int numberOfCurrentBits = 0;
 
         for (auto d = 1u; d <= data.size() && outputSize < sizeTotal; ++d) {
             if (d < data.size()) {
                 // take next 8 data bits maybe multiple times
                 assert(numberOfCurrentBits == 0);
-                for (; numberOfCurrentBits < bitSetSize && d < data.size();) {
+                for (; numberOfCurrentBits < BITSET_SIZE_BITS && d < data.size();) {
                     currentBitSet <<= 8;
                     currentBitSet |= data[d];
                     ++d;
                     numberOfCurrentBits += 8;
                 }
-                assert(numberOfCurrentBits < bitSetSize + 8);
+                assert(numberOfCurrentBits < BITSET_SIZE_BITS + 8);
                 --d;
             }
 
             // push as many bits as possible from currentBitSet to globalBitsSet which is working set
-            for (int m = bitSetSize - numberOfMeaningBits; m > 0 && numberOfCurrentBits > 0; --m) {
+            for (int m = BITSET_SIZE_BITS - numberOfMeaningBits; m > 0 && numberOfCurrentBits > 0; --m) {
                 globalBitSet[m - 1] = currentBitSet[numberOfCurrentBits - 1];
                 numberOfCurrentBits--;
                 numberOfMeaningBits++;
@@ -149,26 +158,26 @@ namespace decode {
                 INFO(loggerPrint("GlobalBitSet  " + globalBitSet.to_string());)
                 INFO(loggerPrint("CurrentBitSet  " + currentBitSet.to_string());)
                 //bits  data[currentId];
-                if (globalBitSet[bitSetSize - 1] == 0) {
-                    auto position = std::bitset<DICTIONARY_BITS_COUNT>(0);
+                if (globalBitSet[BITSET_SIZE_BITS - 1] == 0) {
+                    auto position = std::bitset<DICTIONARY_SIZE_BITS>(0);
                     // start from least significant bit
-                    for (auto b = 0; b < DICTIONARY_BITS_COUNT; ++b)
-                        position[b] = globalBitSet[bitSetSize - 1 - DICTIONARY_BITS_COUNT + b];
-                    auto length = std::bitset<DICTIONARY_BITS_COUNT>(0);
-                    for (auto b = 0; b < DICTIONARY_BITS_COUNT; ++b)
-                        length[b] = globalBitSet[bitSetSize - 1 - 2 * DICTIONARY_BITS_COUNT + b];
+                    for (auto b = 0; b < DICTIONARY_SIZE_BITS; ++b)
+                        position[b] = globalBitSet[BITSET_SIZE_BITS - 1 - DICTIONARY_SIZE_BITS + b];
+                    auto length = std::bitset<DICTIONARY_MATCH_LENGTH_BITS>(0);
+                    for (auto b = 0; b < DICTIONARY_MATCH_LENGTH_BITS; ++b)
+                        length[b] = globalBitSet[BITSET_SIZE_BITS - 1 - DICTIONARY_SIZE_BITS - DICTIONARY_MATCH_LENGTH_BITS + b];
                     INFO(loggerPrint(std::to_string(position.to_ulong()) + " " + std::to_string(length.to_ulong() + LENGTH_OFFSET));)
 
                     output.push_back({true, ' ', (int) position.to_ulong(), (int) length.to_ulong() + LENGTH_OFFSET});
-                    outputSize += 1 + 2 * DICTIONARY_BITS_COUNT;
-                    globalBitSet <<= 1 + 2 * DICTIONARY_BITS_COUNT;
-                    numberOfMeaningBits -= (1 + 2 * DICTIONARY_BITS_COUNT);
+                    outputSize += 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
+                    globalBitSet <<= 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
+                    numberOfMeaningBits -= (1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS);
                     assert(numberOfMeaningBits >= 0);
                     INFO(loggerPrint("New GlobalBitSet  " + globalBitSet.to_string());)
                 } else if (numberOfMeaningBits >= 9) {
                     auto valueBitSet = std::bitset<8>(0);
                     for (int b = 0; b < 8; ++b)
-                        valueBitSet[b] = globalBitSet[bitSetSize - 9 + b];
+                        valueBitSet[b] = globalBitSet[BITSET_SIZE_BITS - 9 + b];
                     auto value = valueBitSet.to_ulong();
                     output.push_back({false, static_cast<unsigned char>(value), 0, 0});
                     outputSize += 9;
@@ -177,14 +186,14 @@ namespace decode {
                     assert(numberOfMeaningBits >= 0);
                     INFO(loggerPrint(std::to_string(static_cast<unsigned char>(value)));)
                 }
-                if (numberOfMeaningBits == bitSetSize) {
+                if (numberOfMeaningBits == BITSET_SIZE_BITS) {
                     repeatLoop = true;
                 } else if (numberOfCurrentBits > 0) {
-                    for (int j = bitSetSize - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
+                    for (int j = BITSET_SIZE_BITS - numberOfMeaningBits; j > 0 && numberOfCurrentBits > 0; j--) {
                         globalBitSet[j - 1] = currentBitSet[numberOfCurrentBits - 1];
                         numberOfCurrentBits--;
                         numberOfMeaningBits++;
-                        if (numberOfMeaningBits == bitSetSize) {
+                        if (numberOfMeaningBits == BITSET_SIZE_BITS) {
                             repeatLoop = true;
                             break;
                         }
@@ -205,7 +214,7 @@ namespace decode {
         INFO(loggerPrint("Started Decoding");)
 
         //create dictionary as list of first character
-        Dictionary dict{DICTIONARY_SIZE, input.front().value};
+        Dictionary dict{DICTIONARY_SIZE, DICTIONARY_MATCH_LENGTH, input.front().value};
         std::vector<unsigned char> output;
 
         for (auto i = 1u; i < input.size(); ++i) {
