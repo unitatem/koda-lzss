@@ -69,6 +69,22 @@ const std::vector<unsigned int> calculateHistogram(std::vector<unsigned char> ob
 	}
 	return localHistogram;
 }
+//Calculate block 2-degree histogram for entropy
+const std::vector<unsigned int> calculateBlockHistogram2Degree(std::vector<unsigned char> object, unsigned int maxDepth) {
+	std::vector<unsigned int> localHistogram(maxDepth*maxDepth);
+	for (auto i = 0u; i < object.size()-1; i=i+2) {
+		localHistogram[object[i]*256 + object[i+1]]++;
+	}
+	return localHistogram;
+}
+//Calculate block 3-degree histogram for entropy
+const std::vector<unsigned int> calculateBlockHistogram3Degree(std::vector<unsigned char> object, unsigned int maxDepth) {
+	std::vector<unsigned int> localHistogram(maxDepth*maxDepth*maxDepth);
+	for (auto i = 0u; i < object.size()-2; i=i+3) {
+		localHistogram[object[i]*256*256 + object[i+1]*256 + object[i+2]]++;
+	}
+	return localHistogram;
+}
 //Calculate entropy
 double calculateEntropy(std::vector<unsigned char> object, std::vector<unsigned int> histogram) {
 	double entropy = 0;
@@ -106,6 +122,30 @@ double calculateEntropy2Degree(std::vector<unsigned char> object, std::vector<un
 			}
 			entropy += stateEntropy[i*histogram.size() + j] * (counterSequence2D / (double)(object.size() - 1));
 		}
+	}
+	return entropy;
+}
+
+double calculateBlockEntropy2Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram)
+{
+	double entropy = 0;
+	for (auto i = 0u; i < histogram.size(); i++) {
+		if (histogram[i] == 0)
+			continue;
+		double iprobability = (double)histogram[i] / (double)(object.size()/2);
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
+	}
+	return entropy;
+}
+
+double calculateBlockEntropy3Degree(std::vector<unsigned char> object, std::vector<unsigned int> histogram)
+{
+	double entropy = 0;
+	for (auto i = 0u; i < histogram.size(); i++) {
+		if (histogram[i] == 0)
+			continue;
+		double iprobability = (double)histogram[i] / (double)(object.size() / 3);
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
 	}
 	return entropy;
 }
