@@ -51,11 +51,9 @@ int main() {
 //    std::vector<unsigned char> source = {115, 142, 163, 170, 170, 169, 161, 160, 161, 160, 160, 155, 160, 161};
 
     printVector("Source", source);
-    std::vector<unsigned char> encodedData;
-    int size;
-    std::tie(encodedData, size) = codec.encode(source);
-    printVectorAsBits("Transmission in Bytes: ", encodedData);
-    auto decodedData = codec.decode(encodedData, size);
+    EncodedDataParams dataEncoded = codec.encode(source);
+    printVectorAsBits("Transmission in Bytes: ", dataEncoded.data);
+    auto decodedData = codec.decode(dataEncoded.data, dataEncoded.bitSize);
     printVector("Decoded", decodedData);
 #endif
 
@@ -95,16 +93,15 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	double entropy2DegreeBlockSource = calculateBlockEntropy2Degree(imageToEncode, histogram);
 	double entropy3DegreeBlockSource = calculateBlockEntropy3Degree(imageToEncode, histogram);
 
-	std::vector<unsigned char> imageEncoded;
-	int size;
-	std::tie(imageEncoded, size) = codec.encode(imageToEncode);
+    EncodedDataParams dataEncoded = codec.encode(imageToEncode);
 	calculationsFile << "*****FILES_SIZE*****\n";
 	calculationsFile << "Original size (bytes) : " << std::to_string(imageToEncode.size()) << "\n";
-	calculationsFile << "Encoded size (bytes) : " << std::to_string(imageEncoded.size()) << "\n";
+	calculationsFile << "Encoded size (bytes) : " << std::to_string(dataEncoded.data.size()) << "\n";
+    calculationsFile << "Average bit length (bits) : " << std::to_string(dataEncoded.avgBitLength) << "\n";
 	std::cout << "Object encoded: " << object << "\n";
-	createFile(imageEncoded, objectsFolder + outputFolder + object + dictWndSize + "Encoded.txt");
+	createFile(dataEncoded.data, objectsFolder + outputFolder + object + dictWndSize + "Encoded.txt");
 	std::cout << "Encoded Object saved: " << object << "\n";
-	auto imageDecoded = codec.decode(imageEncoded, size);
+	auto imageDecoded = codec.decode(dataEncoded.data, dataEncoded.bitSize);
 	calculationsFile << "Decoded size (bytes) : " << std::to_string(imageDecoded.size()) << "\n";
 	std::cout << "Object decoded: " << object << "\n";
 	std::string imagesMatch;

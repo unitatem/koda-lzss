@@ -12,9 +12,15 @@
 
 #define WINDOW_SIZE            DICTIONARY_SIZE
 
+struct EncodedDataParams {
+    std::vector<unsigned char> data;
+    unsigned int bitSize;
+    double avgBitLength;
+};
+
 class LZSS {
 public:
-    std::tuple<std::vector<unsigned char>, int> encode(const std::vector<unsigned char> &input) const;
+    EncodedDataParams encode(const std::vector<unsigned char> &input) const;
 
     std::vector<unsigned char> decode(const std::vector<unsigned char> &compressed, int size) const;
 };
