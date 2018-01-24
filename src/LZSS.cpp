@@ -1,10 +1,17 @@
 #include "Dictionary.hpp"
 #include "Logger.hpp"
 #include "LZSS.hpp"
+
 #include <bitset>
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
+
+struct HistogramData {
+    int counter;
+    int length;
+};
 
 struct CodecBatchData {
     bool useDictionary;
@@ -21,13 +28,16 @@ const int LENGTH_OFFSET = 1;
 #endif
 
 namespace encode {
-    std::pair<std::vector<CodecBatchData>, int> prepareData(const std::vector<unsigned char> &input) {
+    std::pair<std::vector<CodecBatchData>, EncodedDataParams> prepareData(const std::vector<unsigned char> &input) {
         Dictionary dict{DICTIONARY_SIZE, DICTIONARY_MATCH_LENGTH, input.front()};
 
         std::vector<CodecBatchData> output;
         output.push_back({false, input.front(), 0, 0});
         auto bitSize = 8u;
 
+        auto totalHistogramEntryCounter = 0;
+        // (phrase, count)
+        std::unordered_map<std::string, HistogramData> histogram;
         INFO(std::string buffer;)
         for (auto i = 0u; i < input.size(); ++i) {
             DEBUG(dict.print());
@@ -45,6 +55,14 @@ namespace encode {
 			if (i < endIter)
 				std::tie(start, length) = dict.findMatch(input, i, endIter);
 
+            std::string tmp;
+            for (auto i = 0; i < length || i == 0; ++i) {
+                tmp += input[start + i];
+            }
+            auto &histogramEntry = histogram[tmp];
+            ++histogramEntry.counter;
+            ++totalHistogramEntryCounter;
+
             // if pattern in dictionary matched
             // and dictionary use is more efficient than direct data send
             if (length && (1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS < length * 9)) {
@@ -53,6 +71,7 @@ namespace encode {
                 assert(length - LENGTH_OFFSET < DICTIONARY_MATCH_LENGTH);
                 output.push_back({true, 0, start, length - LENGTH_OFFSET});
                 bitSize += 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
+                histogramEntry.length = 1 + DICTIONARY_SIZE_BITS + DICTIONARY_MATCH_LENGTH_BITS;
                 dict.shiftLeft(length);
                 for (auto l = 0; l < length; ++l)
                     dict.insertFromBack(input[i + l], length - l);
@@ -62,14 +81,26 @@ namespace encode {
             // if do not match current dictionary
             output.push_back({false, input[i], 0, 0});
             bitSize += 1 + 8;
+            histogramEntry.length = 1 + 8;
             dict.shiftLeft(1);
             dict.insertFromBack(input[i], 1);
             INFO(loggerPrint("1 " + std::to_string(input[i]));)
         }
 
+        double avgBitLength = 0.0;
+        for (const auto &item : histogram) {
+            avgBitLength += item.second.length * static_cast<double>(item.second.counter);
+        }
+        avgBitLength /= totalHistogramEntryCounter;
+
+
         INFO(loggerPrint("sizeBeforeCompression = " + std::to_string(8 * input.size()));
             loggerPrint("sizeAfterCompression = " + std::to_string(bitSize));)
-        return {output, bitSize};
+
+        EncodedDataParams params;
+        params.bitSize = bitSize;
+        params.avgBitLength = avgBitLength;
+        return {output, params};
     }
 
     std::vector<unsigned char> toBinary(const std::vector<CodecBatchData> &data, unsigned int bitCount) {
@@ -243,14 +274,15 @@ namespace decode {
     }
 }
 
-std::tuple<std::vector<unsigned char>, int> LZSS::encode(const std::vector<unsigned char> &input) const {
+EncodedDataParams LZSS::encode(const std::vector<unsigned char> &input) const {
     INFO(loggerPrint("Started Encoding");)
     if (input.empty()) return {};
 
     std::vector<CodecBatchData> data;
-    auto size = 0u;
-    std::tie(data, size) = encode::prepareData(input);
-    return {encode::toBinary(data, size), size};
+    EncodedDataParams params;
+    std::tie(data, params) = encode::prepareData(input);
+    params.data = encode::toBinary(data, params.bitSize);
+    return params;
 }
 
 std::vector<unsigned char> LZSS::decode(const std::vector<unsigned char> &compressed, int size) const {
