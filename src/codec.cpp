@@ -78,8 +78,9 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	auto blockHistogram2Degree = calculateBlockHistogram2Degree(imageToEncode, DATADEPTH);
 	auto blockHistogram3Degree = calculateBlockHistogram3Degree(imageToEncode, DATADEPTH);
 	double entropy = calculateEntropy(imageToEncode, histogram);
-	double blockEntropy2Degree = calculateBlockEntropy2Degree(imageToEncode, histogram);
-	double blockEntropy3Degree = calculateBlockEntropy3Degree(imageToEncode, histogram);
+
+	double blockEntropy2Degree = calculateBlockEntropy2Degree(imageToEncode, blockHistogram2Degree);
+	double blockEntropy3Degree = calculateBlockEntropy3Degree(imageToEncode, blockHistogram3Degree);
 
 	calculationsFile << "*****INPUT_ENTROPY*****\n";
 	calculationsFile << "Entropy : " << entropy << "\n";
@@ -87,11 +88,6 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	calculationsFile << "Block Entropy 3 Degree : " << blockEntropy3Degree << "\n";
 	calculationsFile << "*****DICTIONARY&WINDOW_SIZE*****\n";
 	calculationsFile << dictWndSize << "\n";
-
-	//double entropy2Degree = calculateEntropy2Degree(imageToEncode, histogram);
-
-	double entropy2DegreeBlockSource = calculateBlockEntropy2Degree(imageToEncode, histogram);
-	double entropy3DegreeBlockSource = calculateBlockEntropy3Degree(imageToEncode, histogram);
 
     EncodedDataParams dataEncoded = codec.encode(imageToEncode);
 	calculationsFile << "*****FILES_SIZE*****\n";
