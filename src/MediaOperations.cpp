@@ -133,7 +133,7 @@ double calculateBlockEntropy2Degree(std::vector<unsigned char> object, std::vect
 		if (histogram[i] == 0)
 			continue;
 		double iprobability = (double)histogram[i] / (double)(object.size()/2);
-		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(2. * 256.));
 	}
 	return entropy;
 }
@@ -145,7 +145,7 @@ double calculateBlockEntropy3Degree(std::vector<unsigned char> object, std::vect
 		if (histogram[i] == 0)
 			continue;
 		double iprobability = (double)histogram[i] / (double)(object.size() / 3);
-		entropy -= iprobability * (std::log2(iprobability) / std::log2(256.));
+		entropy -= iprobability * (std::log2(iprobability) / std::log2(3. * 256.));
 	}
 	return entropy;
 }
