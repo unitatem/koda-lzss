@@ -99,7 +99,7 @@ namespace encode {
 
         EncodedDataParams params;
         params.bitSize = bitSize;
-        params.avgBitLength = avgBitLength;
+        params.avgByteLength = avgBitLength / 8;
         return {output, params};
     }
 

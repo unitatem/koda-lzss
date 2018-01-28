@@ -15,7 +15,7 @@
 struct EncodedDataParams {
     std::vector<unsigned char> data;
     unsigned int bitSize;
-    double avgBitLength;
+    double avgByteLength;
 };
 
 class LZSS {

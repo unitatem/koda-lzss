@@ -97,7 +97,7 @@ void performComputations(std::string objectsFolder, std::string object, LZSS cod
 	calculationsFile << "*****FILES_SIZE*****\n";
 	calculationsFile << "Original size (bytes) : " << std::to_string(imageToEncode.size()) << "\n";
 	calculationsFile << "Encoded size (bytes) : " << std::to_string(dataEncoded.data.size()) << "\n";
-    calculationsFile << "Average bit length (bits) : " << std::to_string(dataEncoded.avgBitLength) << "\n";
+    calculationsFile << "Average byte length (bytes) : " << std::to_string(dataEncoded.avgByteLength) << "\n";
 	std::cout << "Object encoded: " << object << "\n";
 	createFile(dataEncoded.data, objectsFolder + outputFolder + object + dictWndSize + "Encoded.txt");
 	std::cout << "Encoded Object saved: " << object << "\n";
